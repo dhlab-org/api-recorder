@@ -5,16 +5,16 @@ import { ResizablePanel } from './ui/resizable-panel';
 import { SizeControllers } from './ui/size-controllers';
 
 const Devtools = () => {
-  const [uiState, setUiState] = useState<TUiState>('hidden');
+  const [uiState, setUiState] = useState<TUiState>('closed');
 
   return (
     <div>
-      {uiState === 'hidden' && <FloatingButton open={() => setUiState('maximized')} />}
+      {uiState === 'closed' && <FloatingButton open={() => setUiState('maximized')} />}
 
       {uiState === 'maximized' && (
         <ResizablePanel>
-          <div className="flex items-center justify-between border-b border-gray-700 px-4 pb-2 text-sm">
-            <div className="flex items-center gap-2 font-semibold">🎬 API Recorder</div>
+          <div className="flex items-center justify-between border-b border-gray-700 px-4 pb-3 text-sm">
+            <div className="font-semibold">🎬 API Recorder</div>
             <SizeControllers buttons={['minimize', 'close']} setUiState={setUiState} />
           </div>
 
@@ -25,8 +25,8 @@ const Devtools = () => {
       )}
 
       {uiState === 'minimized' && (
-        <div className="fixed bottom-0 left-0 right-0 z-[10000] border-t border-gray-700 bg-gray-900 text-white shadow-2xl flex justify-between px-4 py-2">
-          <div className="flex items-center gap-2 font-semibold">🎬 API Recorder</div>
+        <div className="fixed bottom-0 left-0 right-0 z-[10000] border-t border-gray-700 bg-gray-900 text-white shadow-2xl flex justify-between px-4 py-3">
+          <div className="font-semibold">🎬 API Recorder</div>
           <SizeControllers buttons={['maximize', 'close']} setUiState={setUiState} />
         </div>
       )}

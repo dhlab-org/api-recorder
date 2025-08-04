@@ -31,7 +31,7 @@ const SizeControllers = ({ buttons, setUiState }: TProps) => {
           size="sm"
           variant="ghost"
           className="rounded-full h-5 w-5 hover:bg-red-400"
-          onClick={() => setUiState('hidden')}
+          onClick={() => setUiState('closed')}
         >
           <X />
         </Button>

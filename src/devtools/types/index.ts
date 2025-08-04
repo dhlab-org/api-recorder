@@ -1,1 +1,1 @@
-export type TUiState = 'maximized' | 'minimized' | 'hidden';
+export type TUiState = 'maximized' | 'minimized' | 'closed';
