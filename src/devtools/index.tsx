@@ -1,29 +1,34 @@
 import { Button } from '@/shared/ui';
 import { useState } from 'react';
+import type { TUiState } from './types';
 import { ResizablePanel } from './ui/resizable-panel';
-
-type TUiState = 'expanded' | 'minimized' | 'hidden';
+import { SizeControllers } from './ui/size-controllers';
 
 const Devtools = () => {
   const [uiState, setUiState] = useState<TUiState>('hidden');
 
   return (
     <div>
-      {uiState === 'hidden' && <FloatingButton open={() => setUiState('expanded')} />}
+      {uiState === 'hidden' && <FloatingButton open={() => setUiState('maximized')} />}
 
-      {uiState === 'expanded' && (
+      {uiState === 'maximized' && (
         <ResizablePanel>
           <div className="flex items-center justify-between border-b border-gray-700 px-4 pb-2 text-sm">
             <div className="flex items-center gap-2 font-semibold">🎬 API Recorder</div>
-            <Button size="sm" variant="ghost" onClick={() => setUiState('hidden')}>
-              ✕
-            </Button>
+            <SizeControllers buttons={['minimize', 'close']} setUiState={setUiState} />
           </div>
 
           <div className="h-[calc(100%-72px)] overflow-y-auto p-4 text-xs font-mono leading-tight">
             <div className="text-gray-400">No events yet.</div>
           </div>
         </ResizablePanel>
+      )}
+
+      {uiState === 'minimized' && (
+        <div className="fixed bottom-0 left-0 right-0 z-[10000] border-t border-gray-700 bg-gray-900 text-white shadow-2xl flex justify-between px-4 py-2">
+          <div className="flex items-center gap-2 font-semibold">🎬 API Recorder</div>
+          <SizeControllers buttons={['maximize', 'close']} setUiState={setUiState} />
+        </div>
       )}
     </div>
   );
