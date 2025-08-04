@@ -1,9 +1,9 @@
 import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui';
-import { useState } from 'react';
+import { useRecordingStore } from '../models/recording-store';
 
 const RecordControllers = () => {
-  const [isRecording, setIsRecording] = useState(false);
+  const { isRecording, setIsRecording } = useRecordingStore();
 
   return (
     <div className="flex items-center gap-3">
