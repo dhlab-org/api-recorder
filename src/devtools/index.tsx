@@ -4,13 +4,13 @@ import { MinimizedView } from './ui/minimized-view';
 import { FloatingButton } from './ui/size-controllers';
 
 const Devtools = () => {
-  const { view } = useDevtoolsViewStore();
+  const { uiMode } = useDevtoolsViewStore();
 
   return (
     <div>
-      {view === 'closed' && <FloatingButton />}
-      {view === 'maximized' && <MaximizedView />}
-      {view === 'minimized' && <MinimizedView />}
+      {uiMode === 'closed' && <FloatingButton />}
+      {uiMode === 'maximized' && <MaximizedView />}
+      {uiMode === 'minimized' && <MinimizedView />}
     </div>
   );
 };

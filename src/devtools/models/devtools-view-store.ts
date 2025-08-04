@@ -1,18 +1,18 @@
 import { create } from 'zustand';
-import type { TTab, TView } from '../types';
+import type { TTab, TUiMode } from '../types';
 
 const useDevtoolsViewStore = create<TDevtoolsViewState>(set => ({
-  view: 'maximized',
+  uiMode: 'maximized',
   tab: 'all',
-  setView: view => set({ view }),
+  setUiMode: uiMode => set({ uiMode }),
   setTab: tab => set({ tab }),
 }));
 
 export { useDevtoolsViewStore };
 
 type TDevtoolsViewState = {
-  view: TView;
+  uiMode: TUiMode;
   tab: TTab;
-  setView: (view: TView) => void;
+  setUiMode: (uiMode: TUiMode) => void;
   setTab: (tab: TTab) => void;
 };
