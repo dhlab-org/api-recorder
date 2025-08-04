@@ -1,9 +1,9 @@
 import { Button } from '@/shared/ui';
 import { useState } from 'react';
 import type { TUiState } from './types';
+import { RecordControllers } from './ui/record-controllers';
 import { ResizablePanel } from './ui/resizable-panel';
 import { SizeControllers } from './ui/size-controllers';
-import { RecordControllers } from './ui/record-controllers';
 
 const Devtools = () => {
   const [uiState, setUiState] = useState<TUiState>('closed');
@@ -27,7 +27,7 @@ const Devtools = () => {
 
       {uiState === 'minimized' && (
         <div className="fixed bottom-0 left-0 right-0 z-[10000] border-t border-gray-700 bg-gray-900 text-white shadow-2xl flex justify-between px-4 py-3">
-          <div className="font-semibold">🎬 API Recorder</div>
+          <RecordControllers />
           <SizeControllers buttons={['maximize', 'close']} setUiState={setUiState} />
         </div>
       )}
