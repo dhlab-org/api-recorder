@@ -1,5 +1,5 @@
-import type { TRecEvent } from '@/shared/api/events';
 import { create } from 'zustand';
+import type { TRecEvent } from '@/shared/api/events';
 
 type TRecordingOptions = {
   ignore: (url: string) => boolean;

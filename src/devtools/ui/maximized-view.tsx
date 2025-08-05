@@ -1,12 +1,11 @@
-import { useApiRecorder } from '@/features/record';
-import { cn } from '@/shared/lib/utils';
-import { Button, Input, ScrollArea, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
 import { Ban } from 'lucide-react';
 import { useState } from 'react';
+import { useApiRecorder } from '@/features/record';
+import { cn } from '@/shared/lib';
+import { Button, Input, ResizableFrame, ScrollArea, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
 import { useDevtoolsViewStore } from '../models/devtools-view-store';
 import type { TTab } from '../types';
 import { RecordControllers } from './record-controllers';
-import { ResizablePanel } from './resizable-panel';
 import { SizeControllers } from './size-controllers';
 
 const MaximizedView = () => {
@@ -15,7 +14,7 @@ const MaximizedView = () => {
   const { events, clear } = useApiRecorder();
 
   return (
-    <ResizablePanel>
+    <ResizableFrame>
       <div className="flex items-center justify-between border-b border-gray-700 px-4 pb-3 text-sm">
         <RecordControllers />
         <SizeControllers buttons={['minimize', 'close']} />
@@ -82,7 +81,7 @@ const MaximizedView = () => {
           </Tabs>
         </div>
       </div>
-    </ResizablePanel>
+    </ResizableFrame>
   );
 };
 

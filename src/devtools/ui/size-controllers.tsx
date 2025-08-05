@@ -1,5 +1,5 @@
-import { Button } from '@/shared/ui';
 import { Maximize2, Minimize2, X } from 'lucide-react';
+import { Button } from '@/shared/ui';
 import { useDevtoolsViewStore } from '../models/devtools-view-store';
 
 const SizeControllers = ({ buttons }: TProps) => {
