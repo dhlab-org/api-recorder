@@ -3,11 +3,9 @@ import { ClearEventsButton, ToggleRecordButton, useRecordingStore } from '@/feat
 import { UiModeControllers } from '@/features/switch-ui-mode';
 import { cn } from '@/shared/lib';
 import { Input, ResizableFrame, ScrollArea, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
-import { useDevtoolsViewStore } from '../models/devtools-view-store';
-import type { TTab } from '../types';
 
 const MaximizedView = () => {
-  const { tab: selectedTab, setTab } = useDevtoolsViewStore();
+  const [selectedTab, setSelectedTab] = useState<TTab>('all');
   const [searchValue, setSearchValue] = useState('');
   const { events } = useRecordingStore();
 
@@ -21,7 +19,7 @@ const MaximizedView = () => {
         <div className="flex items-center justify-between gap-5">
           <Tabs
             value={selectedTab}
-            onValueChange={value => setTab(value as TTab)}
+            onValueChange={value => setSelectedTab(value as TTab)}
             className="bg-green-400/5 w-fit rounded-md"
           >
             <TabsList className="flex gap-1 bg-transparent">
@@ -77,3 +75,5 @@ const MaximizedView = () => {
 };
 
 export { MaximizedView };
+
+type TTab = 'all' | 'http' | 'socketio' | 'sse';
