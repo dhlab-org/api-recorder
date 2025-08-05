@@ -8,6 +8,7 @@ const patchFetch = ({ options, pushEvents }: TArgs) => {
 
   window.fetch = async (input, init) => {
     const url = typeof input === 'string' ? input : input.toString();
+
     if (options.ignore(url)) {
       if (!originalFetch) throw new Error('originalFetch is not available');
       return originalFetch(input, init);

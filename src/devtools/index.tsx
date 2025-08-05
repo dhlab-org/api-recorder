@@ -2,7 +2,7 @@ import { OpenDevtoolsButton, useUiModeStore } from '@/features/switch-ui-mode';
 import { MaximizedView } from './ui/maximized-view';
 import { MinimizedView } from './ui/minimized-view';
 
-const Devtools = () => {
+const ApiRecorderDevtools = () => {
   const { uiMode } = useUiModeStore();
 
   return (
@@ -14,4 +14,4 @@ const Devtools = () => {
   );
 };
 
-export { Devtools };
+export { ApiRecorderDevtools };
