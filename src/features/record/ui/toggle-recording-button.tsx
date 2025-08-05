@@ -1,10 +1,10 @@
 import { cn } from '@/shared/lib';
 import { Button } from '@/shared/ui';
-import { useRecordControl } from '../hooks/use-record-control';
+import { useRecordingActions } from '../hooks/use-recording-actions';
 import { useRecordingStore } from '../models/recording-store';
 
-const ToggleRecordButton = () => {
-  const { start, stop } = useRecordControl();
+const ToggleRecordingButton = () => {
+  const { toggle: toggleRecording } = useRecordingActions();
   const { isRecording } = useRecordingStore();
 
   return (
@@ -16,7 +16,7 @@ const ToggleRecordButton = () => {
           'flex items-center gap-2 px-3 py-2 text-sm font-bold transition-all border-2',
           isRecording ? ' border-red-700 ' : 'border-green-600',
         )}
-        onClick={() => (isRecording ? stop() : start())}
+        onClick={toggleRecording}
       >
         {isRecording ? (
           <div className="flex items-center justify-center">
@@ -38,4 +38,4 @@ const ToggleRecordButton = () => {
   );
 };
 
-export { ToggleRecordButton };
+export { ToggleRecordingButton };

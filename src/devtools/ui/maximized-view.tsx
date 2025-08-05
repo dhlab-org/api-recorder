@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ClearEventsButton, ToggleRecordButton, useRecordingStore } from '@/features/record';
+import { ClearEventsButton, ToggleRecordingButton, useRecordingStore } from '@/features/record';
 import { UiModeControllers } from '@/features/switch-ui-mode';
 import { cn } from '@/shared/lib';
 import { Input, ResizableFrame, ScrollArea, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
@@ -12,7 +12,7 @@ const MaximizedView = () => {
   return (
     <ResizableFrame>
       <div className="flex items-center justify-between border-b border-gray-700 px-4 pb-3 text-sm">
-        <ToggleRecordButton />
+        <ToggleRecordingButton />
         <UiModeControllers buttons={['minimize', 'close']} />
       </div>
       <div className="py-3 px-4 flex-1 h-full">
