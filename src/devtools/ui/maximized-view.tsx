@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { ClearEventsButton, ToggleRecordButton, useRecordingStore } from '@/features/record';
+import { UiModeControllers } from '@/features/switch-ui-mode';
 import { cn } from '@/shared/lib';
 import { Input, ResizableFrame, ScrollArea, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
 import { useDevtoolsViewStore } from '../models/devtools-view-store';
 import type { TTab } from '../types';
-import { SizeControllers } from './size-controllers';
 
 const MaximizedView = () => {
   const { tab: selectedTab, setTab } = useDevtoolsViewStore();
@@ -15,7 +15,7 @@ const MaximizedView = () => {
     <ResizableFrame>
       <div className="flex items-center justify-between border-b border-gray-700 px-4 pb-3 text-sm">
         <ToggleRecordButton />
-        <SizeControllers buttons={['minimize', 'close']} />
+        <UiModeControllers buttons={['minimize', 'close']} />
       </div>
       <div className="py-3 px-4 flex-1 h-full">
         <div className="flex items-center justify-between gap-5">

@@ -1,9 +1,9 @@
 import { Maximize2, Minimize2, X } from 'lucide-react';
 import { Button } from '@/shared/ui';
-import { useDevtoolsViewStore } from '../models/devtools-view-store';
+import { useUiModeStore } from '../models/ui-mode-store';
 
-const SizeControllers = ({ buttons }: TProps) => {
-  const { setUiMode } = useDevtoolsViewStore();
+const UiModeControllers = ({ buttons }: TProps) => {
+  const { setUiMode } = useUiModeStore();
 
   return (
     <div className="flex gap-2">
@@ -41,25 +41,7 @@ const SizeControllers = ({ buttons }: TProps) => {
   );
 };
 
-const FloatingButton = () => {
-  const { setUiMode } = useDevtoolsViewStore();
-
-  return (
-    <div className="fixed right-4 z-[10001] transition-all duration-300 bottom-4">
-      <Button
-        onClick={() => setUiMode('maximized')}
-        size="sm"
-        variant="secondary"
-        className="gap-2 bg-gray-900 text-white hover:bg-gray-800 border border-gray-700 shadow-lg"
-      >
-        <span className="text-lg">🎬</span>
-        <span className="text-sm font-medium">API Recorder</span>
-      </Button>
-    </div>
-  );
-};
-
-export { SizeControllers, FloatingButton };
+export { UiModeControllers };
 
 type TProps = {
   buttons: ('minimize' | 'maximize' | 'close')[];

@@ -1,14 +1,13 @@
-import { useDevtoolsViewStore } from './models/devtools-view-store';
+import { OpenDevtoolsButton, useUiModeStore } from '@/features/switch-ui-mode';
 import { MaximizedView } from './ui/maximized-view';
 import { MinimizedView } from './ui/minimized-view';
-import { FloatingButton } from './ui/size-controllers';
 
 const Devtools = () => {
-  const { uiMode } = useDevtoolsViewStore();
+  const { uiMode } = useUiModeStore();
 
   return (
     <>
-      {uiMode === 'closed' && <FloatingButton />}
+      {uiMode === 'closed' && <OpenDevtoolsButton />}
       {uiMode === 'maximized' && <MaximizedView />}
       {uiMode === 'minimized' && <MinimizedView />}
     </>
