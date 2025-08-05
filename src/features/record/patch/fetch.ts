@@ -107,7 +107,16 @@ const patchFetch = () => {
   };
 };
 
-async function cloneBody(body: BodyInit): Promise<unknown> {
+const unPatchFetch = () => {
+  if (originalFetch) {
+    window.fetch = originalFetch;
+    originalFetch = null;
+  }
+};
+
+export { patchFetch, unPatchFetch };
+
+const cloneBody = async (body: BodyInit): Promise<unknown> => {
   if (typeof body === 'string') {
     return body;
   }
@@ -125,13 +134,4 @@ async function cloneBody(body: BodyInit): Promise<unknown> {
     return `[Binary data: ${body.byteLength} bytes]`;
   }
   return '[Unknown body type]';
-}
-
-const unPatchFetch = () => {
-  if (originalFetch) {
-    window.fetch = originalFetch;
-    originalFetch = null;
-  }
 };
-
-export { patchFetch, unPatchFetch };
