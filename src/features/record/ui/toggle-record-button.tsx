@@ -1,9 +1,11 @@
-import { useApiRecorder } from '@/features/record';
 import { cn } from '@/shared/lib';
 import { Button } from '@/shared/ui';
+import { useRecordControl } from '../hooks/use-record-control';
+import { useRecordingStore } from '../models/recording-store';
 
-const RecordControllers = () => {
-  const { isRecording, start, stop } = useApiRecorder();
+const ToggleRecordButton = () => {
+  const { start, stop } = useRecordControl();
+  const { isRecording } = useRecordingStore();
 
   return (
     <div className="flex items-center gap-3">
@@ -36,4 +38,4 @@ const RecordControllers = () => {
   );
 };
 
-export { RecordControllers };
+export { ToggleRecordButton };
