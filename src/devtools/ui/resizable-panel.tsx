@@ -31,7 +31,7 @@ const ResizablePanel = ({ children }: { children: ReactNode }) => {
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-[10000] rounded-t-lg border-t border-gray-700 bg-gray-900 text-white shadow-2xl"
+      className="fixed bottom-0 left-0 right-0 z-[10000] rounded-t-lg border-t border-gray-700 bg-gray-900 text-white shadow-2xl flex flex-col"
       style={{ height }}
     >
       <ResizeHandler
@@ -41,7 +41,7 @@ const ResizablePanel = ({ children }: { children: ReactNode }) => {
           startH.current = height;
         }}
       />
-      {children}
+      <div className="flex-1 overflow-hidden">{children}</div>
     </div>
   );
 };

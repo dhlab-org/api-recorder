@@ -1,9 +1,9 @@
+import { useApiRecorder } from '@/features/record';
 import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui';
-import { useRecordingStore } from '../models/recording-store';
 
 const RecordControllers = () => {
-  const { isRecording, setIsRecording } = useRecordingStore();
+  const { isRecording, start, stop } = useApiRecorder();
 
   return (
     <div className="flex items-center gap-3">
@@ -14,7 +14,7 @@ const RecordControllers = () => {
           'flex items-center gap-2 px-3 py-2 text-sm font-bold transition-all border-2',
           isRecording ? ' border-red-700 ' : 'border-green-600',
         )}
-        onClick={() => setIsRecording(!isRecording)}
+        onClick={() => (isRecording ? stop() : start())}
       >
         {isRecording ? (
           <div className="flex items-center justify-center">
