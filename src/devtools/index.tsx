@@ -7,11 +7,11 @@ const Devtools = () => {
   const { uiMode } = useDevtoolsViewStore();
 
   return (
-    <div>
+    <>
       {uiMode === 'closed' && <FloatingButton />}
       {uiMode === 'maximized' && <MaximizedView />}
       {uiMode === 'minimized' && <MinimizedView />}
-    </div>
+    </>
   );
 };
 

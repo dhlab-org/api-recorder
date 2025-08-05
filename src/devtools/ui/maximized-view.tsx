@@ -1,5 +1,7 @@
+import { useApiRecorder } from '@/features/record';
 import { cn } from '@/shared/lib/utils';
-import { Input, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
+import { Button, Input, ScrollArea, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
+import { Ban } from 'lucide-react';
 import { useState } from 'react';
 import { useDevtoolsViewStore } from '../models/devtools-view-store';
 import type { TTab } from '../types';
@@ -10,6 +12,7 @@ import { SizeControllers } from './size-controllers';
 const MaximizedView = () => {
   const { tab: selectedTab, setTab } = useDevtoolsViewStore();
   const [searchValue, setSearchValue] = useState('');
+  const { events, clear } = useApiRecorder();
 
   return (
     <ResizablePanel>
@@ -17,8 +20,8 @@ const MaximizedView = () => {
         <RecordControllers />
         <SizeControllers buttons={['minimize', 'close']} />
       </div>
-      <div className="py-3 px-4">
-        <div className="flex items-center gap-5">
+      <div className="py-3 px-4 flex-1 h-full">
+        <div className="flex items-center justify-between gap-5">
           <Tabs
             value={selectedTab}
             onValueChange={value => setTab(value as TTab)}
@@ -44,19 +47,28 @@ const MaximizedView = () => {
               ))}
             </TabsList>
           </Tabs>
-
           <Input
             placeholder="검색..."
             value={searchValue}
             onChange={e => setSearchValue(e.target.value)}
             className="text-xs bg-gray-800 border-gray-600 text-white w-36"
           />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={clear}
+            className="ml-auto hover:bg-white/30 rounded-full hover:text-white h-7 w-7"
+          >
+            <Ban />
+          </Button>
         </div>
 
-        <div className="overflow-hidden min-h-0">
+        <div className="overflow-hidden h-full">
           <Tabs value={selectedTab} className="h-full">
             <TabsContent value="all" className="h-full mt-0">
-              <div>All</div>
+              <ScrollArea className="h-full">
+                <div>{JSON.stringify(events)}</div>
+              </ScrollArea>
             </TabsContent>
             <TabsContent value="http" className="h-full mt-0">
               <div>HTTP</div>
