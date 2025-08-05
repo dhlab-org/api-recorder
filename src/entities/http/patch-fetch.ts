@@ -1,17 +1,14 @@
-import type { THttpRequestEvent, THttpResponseEvent } from '@/shared/api/events';
-import { useRecordingStore } from '../models/recording-store';
+import type { THttpRequestEvent, THttpResponseEvent, TRecEvent, TRecordingOptions } from '@/shared/api';
 
 let originalFetch: typeof window.fetch | null = null;
 
-const patchFetch = () => {
+const patchFetch = ({ options, pushEvents }: TArgs) => {
   if (originalFetch) return;
   originalFetch = window.fetch;
 
   window.fetch = async (input, init) => {
-    const store = useRecordingStore.getState();
-
     const url = typeof input === 'string' ? input : input.toString();
-    if (!store.isRecording || store.options.ignore(url)) {
+    if (options.ignore(url)) {
       if (!originalFetch) throw new Error('originalFetch is not available');
       return originalFetch(input, init);
     }
@@ -43,12 +40,12 @@ const patchFetch = () => {
       protocol: 'http',
       method,
       url,
-      headers: store.options.includeHeaders ? requestHeaders : undefined,
+      headers: options.includeHeaders ? requestHeaders : undefined,
       body: init?.body ? await cloneBody(init.body) : undefined,
       requestId,
     };
 
-    store.pushEvents(requestEvent);
+    pushEvents(requestEvent);
 
     try {
       if (!originalFetch) throw new Error('originalFetch is not available');
@@ -80,13 +77,13 @@ const patchFetch = () => {
         protocol: 'http',
         status: res.status,
         statusText: res.statusText,
-        headers: store.options.includeHeaders ? responseHeaders : undefined,
+        headers: options.includeHeaders ? responseHeaders : undefined,
         body: responseBody,
         requestId,
         delayMs: endTime - startTime,
       };
 
-      store.pushEvents(responseEvent);
+      pushEvents(responseEvent);
       return res;
     } catch (err) {
       const endTime = Date.now();
@@ -101,7 +98,7 @@ const patchFetch = () => {
         delayMs: endTime - startTime,
       };
 
-      store.pushEvents(errorEvent);
+      pushEvents(errorEvent);
       throw err;
     }
   };
@@ -134,4 +131,9 @@ const cloneBody = async (body: BodyInit): Promise<unknown> => {
     return `[Binary data: ${body.byteLength} bytes]`;
   }
   return '[Unknown body type]';
+};
+
+type TArgs = {
+  options: TRecordingOptions;
+  pushEvents: (e: TRecEvent) => void;
 };

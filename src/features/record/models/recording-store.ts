@@ -1,11 +1,5 @@
 import { create } from 'zustand';
-import type { TRecEvent } from '@/shared/api/events';
-
-type TRecordingOptions = {
-  ignore: (url: string) => boolean;
-  maxEvents?: number;
-  includeHeaders?: boolean;
-};
+import type { TRecEvent, TRecordingOptions } from '@/shared/api';
 
 type TRecordingState = {
   isRecording: boolean;
