@@ -1,6 +1,6 @@
-import { Devtools } from '@/devtools';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { Devtools } from '@/devtools';
 
 import './styles/index.css';
 import { Demo } from './demo';

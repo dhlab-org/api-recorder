@@ -1,30 +1,25 @@
-import { useApiRecorder } from '@/features/record';
-import { cn } from '@/shared/lib/utils';
-import { Button, Input, ScrollArea, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
-import { Ban } from 'lucide-react';
 import { useState } from 'react';
-import { useDevtoolsViewStore } from '../models/devtools-view-store';
-import type { TTab } from '../types';
-import { RecordControllers } from './record-controllers';
-import { ResizablePanel } from './resizable-panel';
-import { SizeControllers } from './size-controllers';
+import { ClearEventsButton, ToggleRecordingButton, useRecordingStore } from '@/features/record';
+import { UiModeControllers } from '@/features/switch-ui-mode';
+import { cn } from '@/shared/lib';
+import { Input, ResizableFrame, ScrollArea, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
 
 const MaximizedView = () => {
-  const { tab: selectedTab, setTab } = useDevtoolsViewStore();
+  const [selectedTab, setSelectedTab] = useState<TTab>('all');
   const [searchValue, setSearchValue] = useState('');
-  const { events, clear } = useApiRecorder();
+  const { events } = useRecordingStore();
 
   return (
-    <ResizablePanel>
+    <ResizableFrame>
       <div className="flex items-center justify-between border-b border-gray-700 px-4 pb-3 text-sm">
-        <RecordControllers />
-        <SizeControllers buttons={['minimize', 'close']} />
+        <ToggleRecordingButton />
+        <UiModeControllers buttons={['minimize', 'close']} />
       </div>
       <div className="py-3 px-4 flex-1 h-full">
         <div className="flex items-center justify-between gap-5">
           <Tabs
             value={selectedTab}
-            onValueChange={value => setTab(value as TTab)}
+            onValueChange={value => setSelectedTab(value as TTab)}
             className="bg-green-400/5 w-fit rounded-md"
           >
             <TabsList className="flex gap-1 bg-transparent">
@@ -53,14 +48,7 @@ const MaximizedView = () => {
             onChange={e => setSearchValue(e.target.value)}
             className="text-xs bg-gray-800 border-gray-600 text-white w-36"
           />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={clear}
-            className="ml-auto hover:bg-white/30 rounded-full hover:text-white h-7 w-7"
-          >
-            <Ban />
-          </Button>
+          <ClearEventsButton />
         </div>
 
         <div className="overflow-hidden h-full">
@@ -82,8 +70,10 @@ const MaximizedView = () => {
           </Tabs>
         </div>
       </div>
-    </ResizablePanel>
+    </ResizableFrame>
   );
 };
 
 export { MaximizedView };
+
+type TTab = 'all' | 'http' | 'socketio' | 'sse';

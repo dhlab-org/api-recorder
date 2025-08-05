@@ -1,4 +1,4 @@
-import type { THttpRequestEvent, THttpResponseEvent, TRecEvent, TSSEEvent, TSocketIOEvent } from './events';
+import type { THttpRequestEvent, THttpResponseEvent, TRecEvent, TSocketIOEvent, TSSEEvent } from './events';
 
 export const isHttpRequest = (event: TRecEvent): event is THttpRequestEvent =>
   event.protocol === 'http' && event.sender === 'client';
