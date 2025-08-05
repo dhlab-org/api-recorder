@@ -27,7 +27,6 @@ export type THttpResponseEvent = TBaseEvent & {
 
 export type TSocketIOEvent = TBaseEvent & {
   protocol: 'socketio';
-  direction: 'clientToServer' | 'serverToClient';
   event: string;
   data: unknown[];
   delayMs: number;
