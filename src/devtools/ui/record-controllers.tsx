@@ -1,5 +1,5 @@
 import { useApiRecorder } from '@/features/record';
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/shared/lib';
 import { Button } from '@/shared/ui';
 
 const RecordControllers = () => {
