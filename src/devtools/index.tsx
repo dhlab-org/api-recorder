@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { patchFetch, unPatchFetch } from '@/entities/http';
+import { patchFetch, patchXHR, unPatchFetch, unPatchXHR } from '@/entities/http';
 import { patchSocketIO } from '@/entities/websocket';
 import { useRecordingStore } from '@/features/record';
 import { OpenDevtoolsButton, useUiModeStore } from '@/features/switch-ui-mode';
@@ -13,9 +13,11 @@ const ApiRecorderDevtools = () => {
   useEffect(() => {
     patchFetch({ options, pushEvents });
     patchSocketIO({ pushEvents });
+    patchXHR({ options, pushEvents });
 
     return () => {
       unPatchFetch();
+      unPatchXHR();
     };
   }, [options, pushEvents]);
 
