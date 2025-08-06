@@ -29,6 +29,8 @@ const useRecordingStore = create<TRecordingState>(set => ({
 
   pushEvents: (e: TRecEvent) =>
     set(state => {
+      if (!state.isRecording) return state;
+
       const newEvents = [...state.events, e];
 
       // maxEvents 제한 적용
