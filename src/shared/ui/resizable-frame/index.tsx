@@ -1,4 +1,5 @@
 import { type MouseEventHandler, type ReactNode, useEffect, useRef, useState } from 'react';
+import { content, resizableFrame, resizeHandle, resizeHandler } from './styles.css';
 
 const ResizableFrame = ({ children }: { children: ReactNode }) => {
   const [height, setHeight] = useState(320);
@@ -30,10 +31,7 @@ const ResizableFrame = ({ children }: { children: ReactNode }) => {
   }, [drag]);
 
   return (
-    <div
-      className="fixed bottom-0 left-0 right-0 z-[10000] rounded-t-lg border-t border-gray-700 bg-gray-900 text-white shadow-2xl flex flex-col"
-      style={{ height }}
-    >
+    <div className={resizableFrame} style={{ height }}>
       <ResizeHandler
         onMouseDown={e => {
           setDrag(true);
@@ -41,20 +39,18 @@ const ResizableFrame = ({ children }: { children: ReactNode }) => {
           startH.current = height;
         }}
       />
-      <div className="flex-1 overflow-hidden">{children}</div>
+
+      <div className={content}>{children}</div>
     </div>
   );
 };
 
 export { ResizableFrame };
 
-const ResizeHandler = ({ onMouseDown }: { onMouseDown: MouseEventHandler<HTMLDivElement> }) => {
+const ResizeHandler = ({ onMouseDown }: { onMouseDown: MouseEventHandler<HTMLButtonElement> }) => {
   return (
-    <div
-      className="h-3 cursor-row-resize bg-gray-800 flex items-center justify-center rounded-t-lg"
-      onMouseDown={onMouseDown}
-    >
-      <div className="h-1.5 w-8 rounded-full bg-gray-500" />
-    </div>
+    <button type="button" className={resizeHandler} onMouseDown={onMouseDown}>
+      <div className={resizeHandle} />
+    </button>
   );
 };

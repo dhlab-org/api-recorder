@@ -1,17 +1,19 @@
 import { Maximize2, Minimize2, X } from 'lucide-react';
+import { combineStyles } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui';
 import { useUiModeStore } from '../models/ui-mode-store';
+import { closeButton, controlButton, controllersContainer } from './ui-mode-controllers.css';
 
 const UiModeControllers = ({ buttons }: TProps) => {
   const { setUiMode } = useUiModeStore();
 
   return (
-    <div className="flex gap-2">
+    <div className={controllersContainer}>
       {buttons.includes('minimize') && (
         <Button
           size="sm"
           variant="ghost"
-          className="rounded-full h-5 w-5 hover:bg-green-300"
+          className={combineStyles(controlButton)}
           onClick={() => setUiMode('minimized')}
         >
           <Minimize2 />
@@ -21,19 +23,14 @@ const UiModeControllers = ({ buttons }: TProps) => {
         <Button
           size="sm"
           variant="ghost"
-          className="rounded-full h-5 w-5 hover:bg-green-300"
+          className={combineStyles(controlButton)}
           onClick={() => setUiMode('maximized')}
         >
           <Maximize2 />
         </Button>
       )}
       {buttons.includes('close') && (
-        <Button
-          size="sm"
-          variant="ghost"
-          className="rounded-full h-5 w-5 hover:bg-red-400"
-          onClick={() => setUiMode('closed')}
-        >
+        <Button size="sm" variant="ghost" className={combineStyles(closeButton)} onClick={() => setUiMode('closed')}>
           <X />
         </Button>
       )}

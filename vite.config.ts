@@ -2,6 +2,7 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 import { defineConfig } from 'vite'
 import dts from 'vite-plugin-dts'
+import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin'
 
 // https://vite.dev/config/
 export default defineConfig(({ command }) => {
@@ -10,6 +11,7 @@ export default defineConfig(({ command }) => {
   return {
     plugins: [
       react(), 
+      vanillaExtractPlugin(),
       ...(isDev ? [] : [
         dts({
           tsconfigPath: './tsconfig.build.json',
