@@ -1,21 +1,18 @@
 import { useCallback } from 'react';
-import { patchFetch, unPatchFetch } from '@/entities/http';
-import { patchSocketIO } from '@/entities/websocket';
 import { useRecordingStore } from '../models/recording-store';
 
 const useRecordingActions = () => {
-  const { isRecording, setIsRecording, options, pushEvents } = useRecordingStore();
+  const { isRecording, setIsRecording } = useRecordingStore();
 
   const start = useCallback(() => {
     if (isRecording) return;
-    patchFetch({ options, pushEvents });
-    patchSocketIO({ pushEvents });
+
     setIsRecording(true);
-  }, [isRecording, setIsRecording, options, pushEvents]);
+  }, [isRecording, setIsRecording]);
 
   const stop = useCallback(() => {
     if (!isRecording) return;
-    unPatchFetch();
+
     setIsRecording(false);
   }, [isRecording, setIsRecording]);
 
