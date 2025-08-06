@@ -17,7 +17,11 @@
   "publishConfig": {
     "access": "public"
   },
-  "sideEffects": false,
+  "sideEffects": [
+    "*.css",
+    "*.css?*",
+    "*.css.ts"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -27,8 +31,6 @@
   "dependencies": {
     "@vanilla-extract/css": "^1.17.4",
     "lucide-react": "^0.536.0",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
     "zustand": "^5.0.7"
   },
   "peerDependencies": {
@@ -46,7 +48,8 @@
     "socket.io-client": "^4.8.1",
     "typescript": "~5.8.3",
     "vite": "^7.0.4",
-    "vite-plugin-dts": "^3.9.0"
+    "vite-plugin-dts": "^3.9.0",
+    "vite-plugin-libcss": "^1.1.2"
   },
   "packageManager": "yarn@4.9.2",
   "engines": {
