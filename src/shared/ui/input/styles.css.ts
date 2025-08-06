@@ -8,7 +8,7 @@ export const input = style({
   borderRadius: '6px',
   border: '1px solid #d1d5db',
   backgroundColor: 'transparent',
-  padding: '8px 12px',
+  padding: '0 12px',
   fontSize: '14px',
   lineHeight: '1.5',
   color: 'inherit',

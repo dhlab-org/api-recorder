@@ -5,15 +5,12 @@ import { combineStyles } from '@/shared/lib/utils';
 import { Input, ResizableFrame } from '@/shared/ui';
 import {
   activeTabStyle,
-  contentStyle,
   headerStyle,
   inactiveTabStyle,
-  scrollContainerStyle,
+  mainContentStyle,
   scrollContentStyle,
   searchInputStyle,
   tabsContainerStyle,
-  tabsContentStyle,
-  tabsListStyle,
   tabTriggerStyle,
   toolbarStyle,
 } from './maximized-view.css';
@@ -51,38 +48,30 @@ const MaximizedView = () => {
         <ToggleRecordingButton />
         <UiModeControllers buttons={['minimize', 'close']} />
       </div>
-      <div className={contentStyle}>
-        <div className={toolbarStyle}>
-          <div className={tabsContainerStyle}>
-            <div className={tabsListStyle}>
-              {tabs.map(tab => (
-                <button
-                  key={tab.label}
-                  type="button"
-                  onClick={() => setSelectedTab(tab.value as TTab)}
-                  className={combineStyles(
-                    tabTriggerStyle,
-                    tab.value === selectedTab ? activeTabStyle : inactiveTabStyle,
-                  )}
-                >
-                  {tab.label} ({tab.count})
-                </button>
-              ))}
-            </div>
-          </div>
-          <Input
-            placeholder="검색..."
-            value={searchValue}
-            onChange={e => setSearchValue(e.target.value)}
-            className={combineStyles(searchInputStyle)}
-          />
-          <ClearEventsButton />
-        </div>
 
-        <div className={tabsContentStyle}>
-          <div className={scrollContainerStyle}>{renderTabContent()}</div>
+      <div className={toolbarStyle}>
+        <div className={tabsContainerStyle}>
+          {tabs.map(tab => (
+            <button
+              key={tab.label}
+              type="button"
+              onClick={() => setSelectedTab(tab.value as TTab)}
+              className={combineStyles(tabTriggerStyle, tab.value === selectedTab ? activeTabStyle : inactiveTabStyle)}
+            >
+              {tab.label} ({tab.count})
+            </button>
+          ))}
         </div>
+        <Input
+          placeholder="검색..."
+          value={searchValue}
+          onChange={e => setSearchValue(e.target.value)}
+          className={combineStyles(searchInputStyle)}
+        />
+        <ClearEventsButton />
       </div>
+
+      <div className={mainContentStyle}>{renderTabContent()}</div>
     </ResizableFrame>
   );
 };

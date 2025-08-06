@@ -42,7 +42,8 @@ export const buttonVariants = styleVariants({
     backgroundColor: 'transparent',
     color: 'inherit',
     ':hover': {
-      backgroundColor: '#f3f4f6',
+      backgroundColor: 'transparent',
+      color: 'black',
     },
   },
   secondary: {
@@ -66,8 +67,8 @@ export const buttonSizes = styleVariants({
     gap: '6px',
   },
   icon: {
-    width: '36px',
-    height: '36px',
-    padding: '0',
+    width: '20px',
+    height: '20px',
+    padding: '2px',
   },
 });

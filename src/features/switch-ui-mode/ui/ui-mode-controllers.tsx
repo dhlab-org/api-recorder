@@ -11,7 +11,7 @@ const UiModeControllers = ({ buttons }: TProps) => {
     <div className={controllersContainer}>
       {buttons.includes('minimize') && (
         <Button
-          size="sm"
+          size="icon"
           variant="ghost"
           className={combineStyles(controlButton)}
           onClick={() => setUiMode('minimized')}
@@ -21,7 +21,7 @@ const UiModeControllers = ({ buttons }: TProps) => {
       )}
       {buttons.includes('maximize') && (
         <Button
-          size="sm"
+          size="icon"
           variant="ghost"
           className={combineStyles(controlButton)}
           onClick={() => setUiMode('maximized')}
@@ -30,7 +30,7 @@ const UiModeControllers = ({ buttons }: TProps) => {
         </Button>
       )}
       {buttons.includes('close') && (
-        <Button size="sm" variant="ghost" className={combineStyles(closeButton)} onClick={() => setUiMode('closed')}>
+        <Button size="icon" variant="ghost" className={combineStyles(closeButton)} onClick={() => setUiMode('closed')}>
           <X />
         </Button>
       )}

@@ -28,7 +28,7 @@ const ToggleRecordingButton = () => {
     <div className={containerStyle}>
       <Button
         size="sm"
-        variant={isRecording ? 'destructive' : 'default'}
+        variant={isRecording ? 'destructive' : 'ghost'}
         className={combineStyles(toggleButtonStyle, isRecording ? recordingButtonStyle : defaultButtonStyle)}
         onClick={toggleRecording}
       >

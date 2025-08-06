@@ -25,6 +25,7 @@ export const resizeHandler = style({
   justifyContent: 'center',
   borderTopLeftRadius: '8px',
   borderTopRightRadius: '8px',
+  flexShrink: 0,
 });
 
 export const resizeHandle = style({
@@ -36,5 +37,7 @@ export const resizeHandle = style({
 
 export const content = style({
   flex: '1',
-  overflow: 'hidden',
+  display: 'flex',
+  flexDirection: 'column',
+  minHeight: 0,
 });
