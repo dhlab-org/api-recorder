@@ -1,9 +1,6 @@
-import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
-import nested from 'postcss-nested'
 import { defineConfig } from 'vite'
-import cssInjectedByJs from 'vite-plugin-css-injected-by-js'
 import dts from 'vite-plugin-dts'
 
 // https://vite.dev/config/
@@ -13,7 +10,6 @@ export default defineConfig(({ command }) => {
   return {
     plugins: [
       react(), 
-      tailwindcss(),
       ...(isDev ? [] : [
         dts({
           tsconfigPath: './tsconfig.build.json',
@@ -21,16 +17,8 @@ export default defineConfig(({ command }) => {
           rollupTypes: true,
           outDir: 'dist',
         }),
-        cssInjectedByJs(),   
       ]),
     ],
-    css: {
-      postcss: {
-        plugins: [
-          nested(),
-        ],
-      },
-    },
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
