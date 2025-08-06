@@ -19,6 +19,7 @@
   },
   "sideEffects": false,
   "scripts": {
+    "dev": "vite",
     "build": "vite build",
     "format": "biome format . --write",
     "lint": "biome check ."
@@ -33,6 +34,8 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.536.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
     "react-resizable-panels": "^3.0.4",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.11",
