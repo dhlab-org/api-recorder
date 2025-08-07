@@ -1,19 +1,21 @@
+import { combineStyles } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui';
 import { useUiModeStore } from '../models/ui-mode-store';
+import { buttonText, devtoolsButton, devtoolsButtonContainer, emojiIcon } from './open-devtools-button.css';
 
 const OpenDevtoolsButton = () => {
   const { setUiMode } = useUiModeStore();
 
   return (
-    <div className="fixed right-4 z-[10001] transition-all duration-300 bottom-4">
+    <div className={devtoolsButtonContainer}>
       <Button
         onClick={() => setUiMode('maximized')}
         size="sm"
         variant="secondary"
-        className="gap-2 bg-gray-900 text-white hover:bg-gray-800 border border-gray-700 shadow-lg"
+        className={combineStyles(devtoolsButton)}
       >
-        <span className="text-lg">🎬</span>
-        <span className="text-sm font-medium">API Recorder</span>
+        <span className={emojiIcon}>🎬</span>
+        <span className={buttonText}>API Recorder</span>
       </Button>
     </div>
   );

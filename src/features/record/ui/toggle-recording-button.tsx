@@ -1,36 +1,52 @@
-import { cn } from '@/shared/lib';
+import { combineStyles } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui';
 import { useRecordingActions } from '../hooks/use-recording-actions';
 import { useRecordingStore } from '../models/recording-store';
+import {
+  buttonTextStyle,
+  containerStyle,
+  defaultButtonStyle,
+  iconContainerStyle,
+  playIconStyle,
+  recordingButtonStyle,
+  recordingIndicatorStyle,
+  recordingTextStyle,
+  statusContainerStyle,
+  statusIndicatorStyle,
+  statusTextStyle,
+  stopIconStyle,
+  toggleButtonStyle,
+  waitingIndicatorStyle,
+  waitingTextStyle,
+} from './toggle-recording-button.css';
 
 const ToggleRecordingButton = () => {
   const { toggle: toggleRecording } = useRecordingActions();
   const { isRecording } = useRecordingStore();
 
   return (
-    <div className="flex items-center gap-3">
+    <div className={containerStyle}>
       <Button
         size="sm"
-        variant={isRecording ? 'destructive' : 'default'}
-        className={cn(
-          'flex items-center gap-2 px-3 py-2 text-sm font-bold transition-all border-2',
-          isRecording ? ' border-red-700 ' : 'border-green-600',
-        )}
+        variant={isRecording ? 'destructive' : 'ghost'}
+        className={combineStyles(toggleButtonStyle, isRecording ? recordingButtonStyle : defaultButtonStyle)}
         onClick={toggleRecording}
       >
         {isRecording ? (
-          <div className="flex items-center justify-center">
-            <div className="h-3 w-3 bg-white rounded-sm" />
+          <div className={iconContainerStyle}>
+            <div className={stopIconStyle} />
           </div>
         ) : (
-          <div className="h-3 w-3 rounded-full bg-green-600" />
+          <div className={playIconStyle} />
         )}
-        <span className="font-bold tracking-wider">{isRecording ? '녹화 종료' : '녹화 시작'}</span>
+        <span className={buttonTextStyle}>{isRecording ? '녹화 종료' : '녹화 시작'}</span>
       </Button>
 
-      <div className="flex items-center gap-2 text-xs">
-        <div className={cn('h-2 w-2 rounded-full', isRecording ? 'bg-red-500 animate-pulse' : 'bg-gray-400')} />
-        <span className={cn('font-medium tracking-wide', isRecording ? 'text-red-600' : 'text-muted-foreground')}>
+      <div className={statusContainerStyle}>
+        <div
+          className={combineStyles(statusIndicatorStyle, isRecording ? recordingIndicatorStyle : waitingIndicatorStyle)}
+        />
+        <span className={combineStyles(statusTextStyle, isRecording ? recordingTextStyle : waitingTextStyle)}>
           {isRecording ? 'LIVE • API 기록 중' : '대기 중'}
         </span>
       </div>

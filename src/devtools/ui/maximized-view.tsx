@@ -1,75 +1,77 @@
 import { useState } from 'react';
 import { ClearEventsButton, ToggleRecordingButton, useRecordingStore } from '@/features/record';
 import { UiModeControllers } from '@/features/switch-ui-mode';
-import { cn } from '@/shared/lib';
-import { Input, ResizableFrame, ScrollArea, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
+import { combineStyles } from '@/shared/lib/utils';
+import { Input, ResizableFrame } from '@/shared/ui';
+import {
+  activeTabStyle,
+  headerStyle,
+  inactiveTabStyle,
+  mainContentStyle,
+  scrollContentStyle,
+  searchInputStyle,
+  tabsContainerStyle,
+  tabTriggerStyle,
+  toolbarStyle,
+} from './maximized-view.css';
 
 const MaximizedView = () => {
   const [selectedTab, setSelectedTab] = useState<TTab>('all');
   const [searchValue, setSearchValue] = useState('');
   const { events } = useRecordingStore();
 
+  const tabs = [
+    { label: 'All', value: 'all', count: 5 },
+    { label: 'HTTP', value: 'http', count: 2 },
+    { label: 'Socket.io', value: 'socketio', count: 3 },
+    { label: 'SSE', value: 'sse', count: 0 },
+  ];
+
+  const renderTabContent = () => {
+    switch (selectedTab) {
+      case 'all':
+        return <div className={scrollContentStyle}>{JSON.stringify(events)}</div>;
+      case 'http':
+        return <div>HTTP</div>;
+      case 'socketio':
+        return <div>Socket.io</div>;
+      case 'sse':
+        return <div>SSE</div>;
+      default:
+        return <div>All</div>;
+    }
+  };
+
   return (
     <ResizableFrame>
-      <div className="flex items-center justify-between border-b border-gray-700 px-4 pb-3 text-sm">
+      <div className={headerStyle}>
         <ToggleRecordingButton />
         <UiModeControllers buttons={['minimize', 'close']} />
       </div>
-      <div className="py-3 px-4 flex-1 h-full">
-        <div className="flex items-center justify-between gap-5">
-          <Tabs
-            value={selectedTab}
-            onValueChange={value => setSelectedTab(value as TTab)}
-            className="bg-green-400/5 w-fit rounded-md"
-          >
-            <TabsList className="flex gap-1 bg-transparent">
-              {[
-                { label: 'All', value: 'all', count: 5 },
-                { label: 'HTTP', value: 'http', count: 2 },
-                { label: 'Socket.io', value: 'socketio', count: 3 },
-                { label: 'SSE', value: 'sse', count: 0 },
-              ].map(tab => (
-                <TabsTrigger
-                  key={tab.label}
-                  value={tab.value}
-                  className={cn(
-                    'font-light text-xs px-2 py-0 transition-colors rounded-sm cursor-pointer',
-                    tab.value === selectedTab ? 'text-white bg-green-500!' : 'text-green-400 hover:text-white',
-                  )}
-                >
-                  {tab.label} ({tab.count})
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-          <Input
-            placeholder="검색..."
-            value={searchValue}
-            onChange={e => setSearchValue(e.target.value)}
-            className="text-xs bg-gray-800 border-gray-600 text-white w-36"
-          />
-          <ClearEventsButton />
-        </div>
 
-        <div className="overflow-hidden h-full">
-          <Tabs value={selectedTab} className="h-full">
-            <TabsContent value="all" className="h-full mt-0">
-              <ScrollArea className="h-full">
-                <div>{JSON.stringify(events)}</div>
-              </ScrollArea>
-            </TabsContent>
-            <TabsContent value="http" className="h-full mt-0">
-              <div>HTTP</div>
-            </TabsContent>
-            <TabsContent value="socketio" className="h-full mt-0">
-              <div>Socket.io</div>
-            </TabsContent>
-            <TabsContent value="sse" className="h-full mt-0">
-              <div>SSE</div>
-            </TabsContent>
-          </Tabs>
+      <div className={toolbarStyle}>
+        <div className={tabsContainerStyle}>
+          {tabs.map(tab => (
+            <button
+              key={tab.label}
+              type="button"
+              onClick={() => setSelectedTab(tab.value as TTab)}
+              className={combineStyles(tabTriggerStyle, tab.value === selectedTab ? activeTabStyle : inactiveTabStyle)}
+            >
+              {tab.label} ({tab.count})
+            </button>
+          ))}
         </div>
+        <Input
+          placeholder="검색..."
+          value={searchValue}
+          onChange={e => setSearchValue(e.target.value)}
+          className={combineStyles(searchInputStyle)}
+        />
+        <ClearEventsButton />
       </div>
+
+      <div className={mainContentStyle}>{renderTabContent()}</div>
     </ResizableFrame>
   );
 };
