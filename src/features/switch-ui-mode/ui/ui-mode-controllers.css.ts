@@ -11,6 +11,7 @@ export const controlButton = style({
   padding: '3px',
   ':hover': {
     backgroundColor: '#86efac', // green-300
+    color: 'black',
   },
 });
 
@@ -18,5 +19,6 @@ export const closeButton = style({
   borderRadius: '9999px',
   ':hover': {
     backgroundColor: '#f87171', // red-400
+    color: 'black',
   },
 });

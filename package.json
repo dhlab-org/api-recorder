@@ -23,7 +23,6 @@
     "*.css.ts"
   ],
   "scripts": {
-    "dev": "vite",
     "build": "vite build",
     "format": "biome format . --write",
     "lint": "biome check ."

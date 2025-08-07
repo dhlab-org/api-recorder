@@ -17,9 +17,11 @@ export const button = style({
     pointerEvents: 'none',
     opacity: 0.5,
   },
+  ':focus': {
+    outline: 0,
+  },
   ':focus-visible': {
-    outline: '2px solid #3b82f6',
-    outlineOffset: '2px',
+    outline: 0,
   },
 });
 
@@ -43,7 +45,6 @@ export const buttonVariants = styleVariants({
     color: 'inherit',
     ':hover': {
       backgroundColor: 'transparent',
-      color: 'black',
     },
   },
   secondary: {
