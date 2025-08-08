@@ -17,9 +17,7 @@ const useRecordingStore = create<TRecordingState>(set => ({
   setIsRecording: isRecording => set({ isRecording }),
   events: [],
   options: {
-    ignore: () => false,
-    maxEvents: 1000,
-    includeHeaders: true,
+    ignore: [],
   },
 
   setOptions: newOptions =>
@@ -31,14 +29,7 @@ const useRecordingStore = create<TRecordingState>(set => ({
     set(state => {
       if (!state.isRecording) return state;
 
-      const newEvents = [...state.events, e];
-
-      // maxEvents 제한 적용
-      if (state.options.maxEvents && newEvents.length > state.options.maxEvents) {
-        return { events: newEvents.slice(-state.options.maxEvents) };
-      }
-
-      return { events: newEvents };
+      return { events: [...state.events, e] };
     }),
 
   clearEvents: () => set({ events: [] }),

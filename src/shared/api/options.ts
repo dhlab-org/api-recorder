@@ -1,5 +1,3 @@
 export type TRecordingOptions = {
-  ignore: (url: string) => boolean;
-  maxEvents?: number;
-  includeHeaders?: boolean;
+  ignore?: Array<string | RegExp>;
 };
