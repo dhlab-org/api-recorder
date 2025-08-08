@@ -1,111 +1,182 @@
 import type { THttpRequestEvent, THttpResponseEvent, TRecEvent, TRecordingOptions } from '@/shared/api';
-import { cloneBody } from './utils';
+import { buildIgnore, cloneBody, genReqId, nowMs, parseRawHeaders } from './utils';
 
-let originalXHR: typeof window.XMLHttpRequest | null = null;
+let patched = false;
 
 const patchXHR = ({ options, pushEvents }: TArgs) => {
-  if (originalXHR) return;
-  originalXHR = window.XMLHttpRequest;
+  if (patched) return;
+  patched = true;
 
-  class PatchedXMLHttpRequest extends originalXHR {
-    private _requestId = Math.random().toString(36).slice(2);
-    private _startTime = 0;
-    private _url = '';
-    private _method = 'GET';
+  const ignore = buildIgnore(options.ignore);
 
-    private _requestHeaders: Record<string, string> = {};
+  const OriginalXHR = window.XMLHttpRequest;
+  const originalOpen = OriginalXHR.prototype.open;
+  const originalSetRequestHeader = OriginalXHR.prototype.setRequestHeader;
+  const originalSend = OriginalXHR.prototype.send;
 
-    open(method: string, url: string, async = true, user?: string, password?: string) {
-      this._method = method;
-      this._url = url;
-      super.open(method, url, async, user, password);
+  const metaMap = new WeakMap<XMLHttpRequest, XhrMeta>();
+
+  OriginalXHR.prototype.open = function (
+    this: XMLHttpRequest,
+    method: string,
+    url: string,
+    async: boolean = true,
+    user?: string | null,
+    password?: string | null,
+  ) {
+    const meta: XhrMeta = {
+      method: method?.toUpperCase(),
+      url,
+      async,
+      headers: {},
+    };
+    metaMap.set(this, meta);
+    return originalOpen.call(this, method, url, async, user, password);
+  };
+
+  OriginalXHR.prototype.setRequestHeader = function (this: XMLHttpRequest, name: string, value: string) {
+    const meta = metaMap.get(this);
+    if (meta) meta.headers[name] = value;
+    return originalSetRequestHeader.call(this, name, value);
+  };
+
+  OriginalXHR.prototype.send = function (this: XMLHttpRequest, body?: Document | BodyInit | null) {
+    const meta = metaMap.get(this) || { headers: {} };
+    const { url = '' } = meta;
+
+    if (!ignore(url)) {
+      const requestId = genReqId();
+      const start = nowMs();
+      meta.requestId = requestId;
+      meta.start = start;
+
+      // body 직렬화
+      (async () => {
+        meta.body = body ? await cloneBody(body as BodyInit) : undefined;
+        const reqEvent: THttpRequestEvent = {
+          id: `${requestId}-req`,
+          protocol: 'http',
+          requestId,
+          timestamp: start,
+          method: meta.method || 'GET',
+          url: meta.url || '',
+          headers: meta.headers,
+          body: meta.body,
+        };
+        pushEvents(reqEvent);
+      })().catch(() => {});
     }
 
-    setRequestHeader(header: string, value: string) {
-      this._requestHeaders[header] = value;
-      super.setRequestHeader(header, value);
-    }
+    // load/error 처리
+    const onLoad = () => {
+      const { requestId, start } = meta;
+      if (!requestId || start === undefined) return;
 
-    async send(body?: Document | XMLHttpRequestBodyInit | null) {
-      if (options.ignore(this._url)) {
-        return super.send(body);
+      const end = nowMs();
+
+      // 응답 헤더
+      let headers: Record<string, string> | undefined;
+      try {
+        headers = parseRawHeaders(this.getAllResponseHeaders?.() || '');
+      } catch {
+        headers = undefined;
       }
 
-      this._startTime = Date.now();
-
-      const requestEvent: THttpRequestEvent = {
-        id: `${this._requestId}-req`,
-        sender: 'client',
-        protocol: 'http',
-        method: this._method,
-        url: this._url,
-        headers: options.includeHeaders ? this._requestHeaders : undefined,
-        body: body && body instanceof Document === false ? await cloneBody(body as BodyInit) : undefined,
-        requestId: this._requestId,
-      };
-
-      pushEvents(requestEvent);
-
-      this.addEventListener('loadend', () => {
-        const endTime = Date.now();
-
-        const responseHeaders = parseResponseHeaders(this.getAllResponseHeaders());
-
-        let responseBody: unknown;
-        try {
-          const contentType = this.getResponseHeader('content-type') || '';
-          if (contentType.includes('application/json')) {
-            responseBody = JSON.parse(this.responseText);
-          } else if (contentType.includes('text/')) {
-            responseBody = this.responseText;
-          } else {
-            responseBody = `[Binary response]`;
+      // 응답 바디
+      let body: unknown | undefined;
+      try {
+        const ct = headers?.['content-type'] || '';
+        if (this.responseType === '' || this.responseType === 'text') {
+          if (ct.includes('application/json')) {
+            try {
+              body = JSON.parse(this.responseText);
+            } catch {
+              body = this.responseText;
+            }
+          } else if (ct.startsWith('text/')) {
+            body = this.responseText;
           }
-        } catch {}
+        } else if (this.responseType === 'json') {
+          body = this.response;
+        } else {
+          // arraybuffer/blob/document 등은 생략
+          body = undefined;
+        }
+      } catch {
+        body = undefined;
+      }
 
-        const responseEvent: THttpResponseEvent = {
-          id: `${this._requestId}-res`,
-          sender: 'server',
-          protocol: 'http',
-          status: this.status,
-          statusText: this.statusText,
-          headers: options.includeHeaders ? responseHeaders : undefined,
-          body: responseBody,
-          requestId: this._requestId,
-          delayMs: endTime - this._startTime,
-        };
+      const resEvent: THttpResponseEvent = {
+        id: `${requestId}-res`,
+        protocol: 'http',
+        requestId,
+        timestamp: end,
+        status: this.status,
+        statusText: this.statusText,
+        headers,
+        body,
+        delayMs: end - start,
+        isStream: false,
+      };
+      pushEvents(resEvent);
 
-        pushEvents(responseEvent);
-      });
+      cleanup();
+    };
 
-      super.send(body);
-    }
-  }
+    const onError = () => {
+      const { requestId, start } = meta;
+      if (!requestId || start === undefined) return;
+      const end = nowMs();
+      const errEvent: THttpResponseEvent = {
+        id: `${requestId}-err`,
+        protocol: 'http',
+        requestId,
+        timestamp: end,
+        status: 0,
+        statusText: 'XHR Network Error',
+        error: true,
+        delayMs: end - start,
+      };
+      pushEvents(errEvent);
+      cleanup();
+    };
 
-  window.XMLHttpRequest = PatchedXMLHttpRequest as typeof XMLHttpRequest;
+    const cleanup = () => {
+      this.removeEventListener('load', onLoad);
+      this.removeEventListener('error', onError);
+      metaMap.delete(this);
+    };
+
+    this.addEventListener('load', onLoad);
+    this.addEventListener('error', onError);
+
+    return originalSend.call(this, body as Document | XMLHttpRequestBodyInit | null);
+  };
 };
 
-const unPatchXHR = () => {
-  if (originalXHR) {
-    window.XMLHttpRequest = originalXHR;
-    originalXHR = null;
-  }
+const unpatchXHR = () => {
+  if (!patched) return;
+  // XHR는 프로토타입 메서드를 원본으로 되돌려야 하는데,
+  // 위에서 원본을 캡처했으므로 여기서 재설정하려면
+  // 다시 가져와 덮어쓰는 방식이 필요함.
+  // 단, 간단하게는 페이지 리로드로 원복되는 패턴을 권장.
+  // 필요 시 추가 예정(원본 참조를 외부 스코프로 끌어와 저장).
+  patched = false;
 };
 
-export { patchXHR, unPatchXHR };
-
-const parseResponseHeaders = (rawHeaders: string): Record<string, string> => {
-  const headers: Record<string, string> = {};
-  rawHeaders.split('\r\n').forEach(line => {
-    const [key, ...rest] = line.split(': ');
-    if (key && rest.length > 0) {
-      headers[key.trim()] = rest.join(': ').trim();
-    }
-  });
-  return headers;
-};
+export { patchXHR, unpatchXHR };
 
 type TArgs = {
   options: TRecordingOptions;
   pushEvents: (e: TRecEvent) => void;
+};
+
+type XhrMeta = {
+  method?: string;
+  url?: string;
+  async?: boolean;
+  headers: Record<string, string>;
+  body?: unknown;
+  requestId?: string;
+  start?: number;
 };

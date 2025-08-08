@@ -1,119 +1,91 @@
 import type { THttpRequestEvent, THttpResponseEvent, TRecEvent, TRecordingOptions } from '@/shared/api';
-import { cloneBody } from './utils';
+import { buildIgnore, cloneBody, genReqId, nowMs, toHeaderRecord, tryReadBody } from './utils';
 
 let originalFetch: typeof window.fetch | null = null;
 
 const patchFetch = ({ options, pushEvents }: TArgs) => {
   if (originalFetch) return;
+  const ignore = buildIgnore(options.ignore);
+
   originalFetch = window.fetch;
 
-  window.fetch = async (input, init) => {
+  window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = typeof input === 'string' ? input : input.toString();
-
-    if (options.ignore(url)) {
-      if (!originalFetch) throw new Error('originalFetch is not available');
-      return originalFetch(input, init);
+    if (ignore(url)) {
+      const ofetch = originalFetch as typeof window.fetch;
+      return ofetch(input, init);
     }
 
-    /* ---- request event ---- */
-    const requestId = Math.random().toString(36).slice(2);
-    const startTime = Date.now();
-    const method = init?.method || 'GET';
+    const requestId = genReqId();
+    const start = nowMs();
+    const method = (
+      init?.method ||
+      (typeof input !== 'string' && 'method' in input && input.method) ||
+      'GET'
+    ).toUpperCase();
 
-    // Request headers 수집
-    const requestHeaders: Record<string, string> = {};
-    if (init?.headers) {
-      if (init.headers instanceof Headers) {
-        for (const [key, value] of init.headers.entries()) {
-          requestHeaders[key] = value;
-        }
-      } else {
-        for (const [key, value] of Object.entries(init.headers)) {
-          if (typeof value === 'string') {
-            requestHeaders[key] = value;
-          }
-        }
-      }
-    }
+    // headers 수집
+    const headers = toHeaderRecord(init?.headers);
 
-    const requestEvent: THttpRequestEvent = {
+    // body 수집
+    const body = init?.body !== undefined ? await cloneBody(init.body as BodyInit) : undefined;
+
+    const reqEvent: THttpRequestEvent = {
       id: `${requestId}-req`,
-      sender: 'client',
       protocol: 'http',
+      requestId,
+      timestamp: start,
       method,
       url,
-      headers: options.includeHeaders ? requestHeaders : undefined,
-      body: init?.body ? await cloneBody(init.body) : undefined,
-      requestId,
+      headers,
+      body,
     };
-
-    pushEvents(requestEvent);
+    pushEvents(reqEvent);
 
     try {
-      if (!originalFetch) throw new Error('originalFetch is not available');
-      const res = await originalFetch(input, init);
-      const endTime = Date.now();
+      const ofetch = originalFetch as typeof window.fetch;
+      const res = await ofetch(input, init);
+      const end = nowMs();
 
-      // Response headers 수집
-      const responseHeaders: Record<string, string> = {};
-      for (const [key, value] of res.headers.entries()) {
-        responseHeaders[key] = value;
-      }
-
-      // Response body 수집
-      let responseBody: unknown;
-
-      const responseClone = res.clone();
-      try {
-        const contentType = res.headers.get('content-type') || '';
-        if (contentType.includes('application/json')) {
-          responseBody = await responseClone.json();
-        } else if (contentType.includes('text/')) {
-          responseBody = await responseClone.text();
-        }
-      } catch {}
-
-      const responseEvent: THttpResponseEvent = {
+      const resEvent: THttpResponseEvent = {
         id: `${requestId}-res`,
-        sender: 'server',
         protocol: 'http',
+        requestId,
+        timestamp: end,
         status: res.status,
         statusText: res.statusText,
-        headers: options.includeHeaders ? responseHeaders : undefined,
-        body: responseBody,
-        requestId,
-        delayMs: endTime - startTime,
+        headers: toHeaderRecord(res.headers),
+        body: await tryReadBody(res),
+        delayMs: end - start,
+        isStream: false, // fetch로 읽은 시점에선 본문을 전부 읽었음
       };
-
-      pushEvents(responseEvent);
+      pushEvents(resEvent);
       return res;
     } catch (err) {
-      const endTime = Date.now();
-
-      const errorEvent: THttpResponseEvent = {
+      const end = nowMs();
+      const errEvent: THttpResponseEvent = {
         id: `${requestId}-err`,
-        sender: 'server',
         protocol: 'http',
+        requestId,
+        timestamp: end,
         status: 0,
         statusText: String(err),
-        requestId,
-        delayMs: endTime - startTime,
+        error: true,
+        delayMs: end - start,
       };
-
-      pushEvents(errorEvent);
+      pushEvents(errEvent);
       throw err;
     }
   };
 };
 
-const unPatchFetch = () => {
-  if (originalFetch) {
-    window.fetch = originalFetch;
-    originalFetch = null;
-  }
+const unpatchFetch = () => {
+  if (!originalFetch) return;
+  window.fetch = originalFetch;
+  originalFetch = null;
 };
 
-export { patchFetch, unPatchFetch };
+export { patchFetch, unpatchFetch };
 
 type TArgs = {
   options: TRecordingOptions;
