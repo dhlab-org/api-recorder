@@ -1,14 +1,14 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ClearEventsButton, ToggleRecordingButton, useRecordingStore } from '@/features/record';
 import { UiModeControllers } from '@/features/switch-ui-mode';
 import { combineStyles } from '@/shared/lib/utils';
 import { Input, ResizableFrame } from '@/shared/ui';
+import { EventsLog } from '@/widgets/events-log';
 import {
   activeTabStyle,
   headerStyle,
   inactiveTabStyle,
   mainContentStyle,
-  scrollContentStyle,
   searchInputStyle,
   tabsContainerStyle,
   tabTriggerStyle,
@@ -18,29 +18,42 @@ import {
 const MaximizedView = () => {
   const [selectedTab, setSelectedTab] = useState<TTab>('all');
   const [searchValue, setSearchValue] = useState('');
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const { events } = useRecordingStore();
 
   const tabs = [
-    { label: 'All', value: 'all', count: 5 },
-    { label: 'HTTP', value: 'http', count: 2 },
-    { label: 'Socket.io', value: 'socketio', count: 3 },
-    { label: 'SSE', value: 'sse', count: 0 },
+    { label: 'All', value: 'all', count: new Set(events.map(e => e.requestId)).size },
+    {
+      label: 'HTTP',
+      value: 'http',
+      count: new Set(events.filter(e => e.protocol === 'http').map(e => e.requestId)).size,
+    },
+    {
+      label: 'Socket.io',
+      value: 'socketio',
+      count: new Set(events.filter(e => e.protocol === 'socketio').map(e => e.requestId)).size,
+    },
+    {
+      label: 'SSE',
+      value: 'sse',
+      count: new Set(events.filter(e => e.protocol === 'readable-stream').map(e => e.requestId)).size,
+    },
   ];
 
-  const renderTabContent = () => {
-    switch (selectedTab) {
-      case 'all':
-        return <div className={scrollContentStyle}>{JSON.stringify(events)}</div>;
-      case 'http':
-        return <div>HTTP</div>;
-      case 'socketio':
-        return <div>Socket.io</div>;
-      case 'sse':
-        return <div>SSE</div>;
-      default:
-        return <div>All</div>;
-    }
-  };
+  const filtered = useMemo(() => {
+    return events.filter(e => {
+      if (selectedTab !== 'all' && e.protocol !== (selectedTab === 'sse' ? 'readable-stream' : selectedTab)) {
+        return false;
+      }
+      if (!searchValue) return true;
+      const text = JSON.stringify(e).toLowerCase();
+      return text.includes(searchValue.toLowerCase());
+    });
+  }, [events, selectedTab, searchValue]);
+
+  const renderTabContent = () => (
+    <EventsLog events={filtered} selectedRequestId={selectedRequestId} onSelectRequest={setSelectedRequestId} />
+  );
 
   return (
     <ResizableFrame>

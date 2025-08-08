@@ -21,9 +21,8 @@ export const toolbarStyle = style({
 
 export const mainContentStyle = style({
   flex: '1',
-  overflow: 'auto',
-  padding: '8px',
-  minHeight: 0,
+  overflow: 'hidden',
+  padding: '12px',
 });
 
 export const tabsContainerStyle = style({
