@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { ClearEventsButton, ToggleRecordingButton, useRecordingStore } from '@/features/record';
+import { useRecordingStore } from '@/entities/record';
+import { ClearEventsButton, ToggleRecordingButton } from '@/features/record';
 import { UiModeControllers } from '@/features/switch-ui-mode';
 import { combineStyles } from '@/shared/lib/utils';
 import { Input, ResizableFrame } from '@/shared/ui';
@@ -97,6 +98,7 @@ const MaximizedView = () => {
           onChange={e => setSearchValue(e.target.value)}
           className={combineStyles(searchInputStyle)}
         />
+
         <ClearEventsButton />
       </div>
 

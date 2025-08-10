@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useRecordingStore } from '../models/recording-store';
+import { useRecordingStore } from '@/entities/record';
 
 const useRecordingActions = () => {
   const { isRecording, setIsRecording } = useRecordingStore();
