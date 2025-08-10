@@ -3,7 +3,8 @@ import { ClearEventsButton, ToggleRecordingButton, useRecordingStore } from '@/f
 import { UiModeControllers } from '@/features/switch-ui-mode';
 import { combineStyles } from '@/shared/lib/utils';
 import { Input, ResizableFrame } from '@/shared/ui';
-import { EventsLog } from '@/widgets/events-log';
+import { EventDetail } from '@/widgets/detail-view';
+import { EventList } from '@/widgets/list-view';
 import {
   activeTabStyle,
   headerStyle,
@@ -51,8 +52,20 @@ const MaximizedView = () => {
     });
   }, [events, selectedTab, searchValue]);
 
+  const group = useMemo(() => events.filter(e => e.requestId === selectedRequestId), [events, selectedRequestId]);
+
   const renderTabContent = () => (
-    <EventsLog events={filtered} selectedRequestId={selectedRequestId} onSelectRequest={setSelectedRequestId} />
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: selectedRequestId ? '1fr 1fr' : '1fr',
+        height: '100%',
+        gap: '8px',
+      }}
+    >
+      <EventList events={filtered} selectedRequestId={selectedRequestId} onSelectRequest={setSelectedRequestId} />
+      {selectedRequestId && group.length > 0 && <EventDetail event={group} />}
+    </div>
   );
 
   return (
@@ -68,7 +81,10 @@ const MaximizedView = () => {
             <button
               key={tab.label}
               type="button"
-              onClick={() => setSelectedTab(tab.value as TTab)}
+              onClick={() => {
+                setSelectedTab(tab.value as TTab);
+                setSelectedRequestId(null);
+              }}
               className={combineStyles(tabTriggerStyle, tab.value === selectedTab ? activeTabStyle : inactiveTabStyle)}
             >
               {tab.label} ({tab.count})
