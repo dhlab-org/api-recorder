@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useRecordingStore } from '@/entities/record';
+import { isSocketIOAvailable, SocketIOInstallPrompt } from '@/entities/websocket';
 import { ExportButton } from '@/features/export';
 import { ClearEventsButton, ToggleRecordingButton } from '@/features/record';
 import { UiModeControllers } from '@/features/switch-ui-mode';
@@ -62,19 +63,25 @@ const MaximizedView = () => {
     [groupedEvents, selectedRequestId],
   );
 
-  const renderTabContent = () => (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: selectedRequestId ? '1fr 1fr' : '1fr',
-        height: '100%',
-        gap: '8px',
-      }}
-    >
-      <EventList groups={filtered} selectedRequestId={selectedRequestId} onSelectRequest={setSelectedRequestId} />
-      {selectedRequestId && selectedGroup && <EventDetail group={selectedGroup} />}
-    </div>
-  );
+  const renderTabContent = () => {
+    if (selectedTab === 'socketio' && !isSocketIOAvailable()) {
+      return <SocketIOInstallPrompt />;
+    }
+
+    return (
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: selectedRequestId ? '1fr 1fr' : '1fr',
+          height: '100%',
+          gap: '8px',
+        }}
+      >
+        <EventList groups={filtered} selectedRequestId={selectedRequestId} onSelectRequest={setSelectedRequestId} />
+        {selectedRequestId && selectedGroup && <EventDetail group={selectedGroup} />}
+      </div>
+    );
+  };
 
   return (
     <ResizableFrame>
