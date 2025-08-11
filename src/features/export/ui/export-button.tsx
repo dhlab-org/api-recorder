@@ -3,10 +3,10 @@ import { useRecordingStore } from '@/entities/record';
 import { Button } from '@/shared/ui';
 
 const ExportButton = () => {
-  const { events } = useRecordingStore();
+  const { groupedEvents } = useRecordingStore();
 
   const handleExport = () => {
-    const blob = new Blob([JSON.stringify(events, null, 2)], {
+    const blob = new Blob([JSON.stringify(groupedEvents, null, 2)], {
       type: 'application/json',
     });
     const url = URL.createObjectURL(blob);
