@@ -1,7 +1,7 @@
 import { Ban } from 'lucide-react';
+import { useRecordingStore } from '@/entities/record';
 import { combineStyles } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui';
-import { useRecordingStore } from '../models/recording-store';
 import { clearButtonStyle } from './clear-events-button.css';
 
 const ClearEventsButton = () => {

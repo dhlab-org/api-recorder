@@ -21,9 +21,9 @@ export const toolbarStyle = style({
 
 export const mainContentStyle = style({
   flex: '1',
-  overflow: 'auto',
-  padding: '8px',
-  minHeight: 0,
+  overflow: 'hidden',
+  padding: '12px',
+  paddingTop: '0',
 });
 
 export const tabsContainerStyle = style({
@@ -37,7 +37,7 @@ export const tabsContainerStyle = style({
 export const tabTriggerStyle = style({
   fontWeight: '300',
   fontSize: '12px',
-  padding: '3px 12px',
+  padding: '6px 12px',
   transition: 'colors 0.2s',
   borderRadius: '4px',
   cursor: 'pointer',

@@ -1,7 +1,7 @@
+import { useRecordingStore } from '@/entities/record';
 import { combineStyles } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui';
 import { useRecordingActions } from '../hooks/use-recording-actions';
-import { useRecordingStore } from '../models/recording-store';
 import {
   buttonTextStyle,
   containerStyle,

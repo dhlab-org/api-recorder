@@ -8,23 +8,24 @@ export const resizableFrame = style({
   zIndex: 10000,
   borderTopLeftRadius: '8px',
   borderTopRightRadius: '8px',
-  borderTop: '1px solid #374151',
-  backgroundColor: '#111827',
+  backgroundColor: 'oklch(0.205 0 0);',
   color: 'white',
   boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
   display: 'flex',
   flexDirection: 'column',
+  overflow: 'hidden',
 });
 
 export const resizeHandler = style({
   height: '12px',
   cursor: 'row-resize',
-  backgroundColor: '#1f2937',
+  border: 'none',
+  outline: 'none',
+  boxShadow: 'none',
+  backgroundColor: 'transparent',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  borderTopLeftRadius: '8px',
-  borderTopRightRadius: '8px',
   flexShrink: 0,
 });
 

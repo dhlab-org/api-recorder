@@ -1,14 +1,17 @@
-import { useState } from 'react';
-import { ClearEventsButton, ToggleRecordingButton, useRecordingStore } from '@/features/record';
+import { useMemo, useState } from 'react';
+import { useRecordingStore } from '@/entities/record';
+import { ExportButton } from '@/features/export';
+import { ClearEventsButton, ToggleRecordingButton } from '@/features/record';
 import { UiModeControllers } from '@/features/switch-ui-mode';
 import { combineStyles } from '@/shared/lib/utils';
 import { Input, ResizableFrame } from '@/shared/ui';
+import { EventDetail } from '@/widgets/detail-view';
+import { EventList } from '@/widgets/list-view';
 import {
   activeTabStyle,
   headerStyle,
   inactiveTabStyle,
   mainContentStyle,
-  scrollContentStyle,
   searchInputStyle,
   tabsContainerStyle,
   tabTriggerStyle,
@@ -18,29 +21,54 @@ import {
 const MaximizedView = () => {
   const [selectedTab, setSelectedTab] = useState<TTab>('all');
   const [searchValue, setSearchValue] = useState('');
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const { events } = useRecordingStore();
 
   const tabs = [
-    { label: 'All', value: 'all', count: 5 },
-    { label: 'HTTP', value: 'http', count: 2 },
-    { label: 'Socket.io', value: 'socketio', count: 3 },
-    { label: 'SSE', value: 'sse', count: 0 },
+    { label: 'All', value: 'all', count: new Set(events.map(e => e.requestId)).size },
+    {
+      label: 'HTTP',
+      value: 'http',
+      count: new Set(events.filter(e => e.protocol === 'http').map(e => e.requestId)).size,
+    },
+    {
+      label: 'Socket.io',
+      value: 'socketio',
+      count: new Set(events.filter(e => e.protocol === 'socketio').map(e => e.requestId)).size,
+    },
+    {
+      label: 'SSE',
+      value: 'sse',
+      count: new Set(events.filter(e => e.protocol === 'readable-stream').map(e => e.requestId)).size,
+    },
   ];
 
-  const renderTabContent = () => {
-    switch (selectedTab) {
-      case 'all':
-        return <div className={scrollContentStyle}>{JSON.stringify(events)}</div>;
-      case 'http':
-        return <div>HTTP</div>;
-      case 'socketio':
-        return <div>Socket.io</div>;
-      case 'sse':
-        return <div>SSE</div>;
-      default:
-        return <div>All</div>;
-    }
-  };
+  const filtered = useMemo(() => {
+    return events.filter(e => {
+      if (selectedTab !== 'all' && e.protocol !== (selectedTab === 'sse' ? 'readable-stream' : selectedTab)) {
+        return false;
+      }
+      if (!searchValue) return true;
+      const text = JSON.stringify(e).toLowerCase();
+      return text.includes(searchValue.toLowerCase());
+    });
+  }, [events, selectedTab, searchValue]);
+
+  const group = useMemo(() => events.filter(e => e.requestId === selectedRequestId), [events, selectedRequestId]);
+
+  const renderTabContent = () => (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: selectedRequestId ? '1fr 1fr' : '1fr',
+        height: '100%',
+        gap: '8px',
+      }}
+    >
+      <EventList events={filtered} selectedRequestId={selectedRequestId} onSelectRequest={setSelectedRequestId} />
+      {selectedRequestId && group.length > 0 && <EventDetail event={group} />}
+    </div>
+  );
 
   return (
     <ResizableFrame>
@@ -55,7 +83,10 @@ const MaximizedView = () => {
             <button
               key={tab.label}
               type="button"
-              onClick={() => setSelectedTab(tab.value as TTab)}
+              onClick={() => {
+                setSelectedTab(tab.value as TTab);
+                setSelectedRequestId(null);
+              }}
               className={combineStyles(tabTriggerStyle, tab.value === selectedTab ? activeTabStyle : inactiveTabStyle)}
             >
               {tab.label} ({tab.count})
@@ -68,7 +99,11 @@ const MaximizedView = () => {
           onChange={e => setSearchValue(e.target.value)}
           className={combineStyles(searchInputStyle)}
         />
-        <ClearEventsButton />
+
+        <div style={{ display: 'flex', gap: 8 }}>
+          <ExportButton />
+          <ClearEventsButton />
+        </div>
       </div>
 
       <div className={mainContentStyle}>{renderTabContent()}</div>

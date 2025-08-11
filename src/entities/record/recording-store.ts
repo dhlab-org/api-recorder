@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { TRecEvent, TRecordingOptions } from '@/shared/api';
+import { EVENTS } from '@/test/data';
 
 type TRecordingState = {
   isRecording: boolean;
@@ -15,7 +16,7 @@ type TRecordingState = {
 const useRecordingStore = create<TRecordingState>(set => ({
   isRecording: false,
   setIsRecording: isRecording => set({ isRecording }),
-  events: [],
+  events: EVENTS as unknown as TRecEvent[],
   options: {
     ignore: [],
   },

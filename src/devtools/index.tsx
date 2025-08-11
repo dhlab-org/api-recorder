@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { patchFetch, patchXHR, unpatchFetch, unpatchXHR } from '@/entities/http';
+import { useRecordingStore } from '@/entities/record';
 import { patchSocketIO } from '@/entities/websocket';
-import { useRecordingStore } from '@/features/record';
 import { OpenDevtoolsButton, useUiModeStore } from '@/features/switch-ui-mode';
 import { MaximizedView } from './ui/maximized-view';
 import { MinimizedView } from './ui/minimized-view';
