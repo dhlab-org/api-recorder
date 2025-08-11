@@ -1,5 +1,4 @@
-import type { TRecEvent } from '@/shared/api';
-import { useEventRows } from '../hooks/use-event-rows';
+import type { TEventGroup } from '@/entities/record';
 import {
   cellStyle,
   listContainerStyle,
@@ -10,15 +9,13 @@ import {
   theadStyle,
 } from './styles.css';
 
-const EventList = ({ events, selectedRequestId, onSelectRequest }: TProps) => {
-  const rows = useEventRows(events);
-
+const EventList = ({ groups, selectedRequestId, onSelectRequest }: TProps) => {
   return (
     <div className={listContainerStyle}>
       <table className={tableStyle}>
         <thead className={theadStyle}>
           <tr>
-            <th className={cellStyle}>Method</th>
+            <th className={cellStyle}>Type</th>
             <th className={cellStyle}>Status</th>
             <th className={cellStyle}>Protocol</th>
             <th className={cellStyle}>URL</th>
@@ -26,19 +23,33 @@ const EventList = ({ events, selectedRequestId, onSelectRequest }: TProps) => {
           </tr>
         </thead>
         <tbody>
-          {rows.map(row => (
+          {groups.map(group => (
             <tr
-              key={row.requestId}
-              onClick={() => onSelectRequest(row.requestId)}
-              className={`${rowStyle} ${row.requestId === selectedRequestId ? rowSelectedStyle : ''}`}
+              key={group.requestId}
+              onClick={() => onSelectRequest(group.requestId)}
+              className={`${rowStyle} ${group.requestId === selectedRequestId ? rowSelectedStyle : ''}`}
             >
-              <td className={`${cellStyle} ${nameCellStyle}`}>{row.type === 'request' ? row.name : row.type}</td>
-              <td className={cellStyle}>{row.status ? row.status.toString() : '—'}</td>
-              <td className={cellStyle}>{row.protocol === 'socketio' ? 'socket.io' : row.protocol}</td>
-              <td className={cellStyle} style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {row.url}
+              <td className={`${cellStyle} ${nameCellStyle}`}>
+                {group.type === 'http-rest' ? 'HTTP' : group.type === 'http-stream' ? 'Stream' : 'Socket.io'}
               </td>
-              <td className={cellStyle}>{new Date(row.timestamp).toLocaleTimeString()}</td>
+              <td className={cellStyle}>
+                {group.type === 'http-rest' && group.response
+                  ? group.response.status.toString()
+                  : group.type === 'http-stream' && group.response
+                    ? group.response.status.toString()
+                    : '—'}
+              </td>
+              <td className={cellStyle}>{group.type === 'socketio' ? 'socket.io' : 'http'}</td>
+              <td className={cellStyle} style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {group.type === 'http-rest' || group.type === 'http-stream' ? group.request.url : group.connection.url}
+              </td>
+              <td className={cellStyle}>
+                {new Date(
+                  group.type === 'http-rest' || group.type === 'http-stream'
+                    ? group.request.timestamp
+                    : group.connection.timestamp,
+                ).toLocaleTimeString()}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -50,7 +61,7 @@ const EventList = ({ events, selectedRequestId, onSelectRequest }: TProps) => {
 export { EventList };
 
 type TProps = {
-  events: TRecEvent[];
+  groups: TEventGroup[];
   selectedRequestId: string | null;
   onSelectRequest: (requestId: string) => void;
 };

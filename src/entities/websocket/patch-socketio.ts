@@ -4,6 +4,8 @@ import type { TRecEvent } from '@/shared/api';
 
 let patched = false;
 
+const socketMetaMap = new WeakMap<Socket, TSocketMeta>();
+
 const patchSocketIO = ({ pushEvents }: TArgs) => {
   if (patched) return;
   patched = true;
@@ -100,30 +102,32 @@ const getProp = (obj: unknown, key: string): unknown =>
   obj && typeof obj === 'object' ? (obj as Record<string, unknown>)[key] : undefined;
 
 const resolveSocketUrl = (socket: Socket): { url: string; namespace?: string } => {
-  const s = socket as unknown as { io?: Record<string, unknown>; nsp?: string };
-  const io = s.io;
-  const namespace = s.nsp;
-  const uri = (getProp(io, 'uri') as string | undefined) || (getProp(io, '_uri') as string | undefined);
-  if (uri) {
-    return { url: namespace && namespace !== '/' ? `${uri}${namespace}` : uri, namespace };
+  // Socket.IO의 내부 구조에서 URL과 네임스페이스 추출
+  const io = getProp(socket, 'io') as unknown as { uri: string; nsp: string };
+  if (io?.uri) {
+    return {
+      url: io.uri,
+      namespace: io.nsp !== '/' ? io.nsp : undefined,
+    };
   }
-  const opts = getProp(io, 'opts') as Record<string, unknown> | undefined;
-  const hostname = (opts?.hostname as string | undefined) || '';
-  const secure = (opts?.secure as boolean | undefined) || false;
-  const port = opts?.port as string | number | undefined;
-  const path = (opts?.path as string | undefined) || '';
-  const scheme = secure ? 'wss' : 'ws';
-  const base = hostname ? `${scheme}://${hostname}${port ? `:${port}` : ''}${path}` : '';
-  return { url: namespace && namespace !== '/' ? `${base}${namespace}` : base, namespace };
+
+  // fallback: 기본값
+  return {
+    url: 'ws://localhost',
+    namespace: undefined,
+  };
 };
 
-const metaMap = new WeakMap<Socket, TSocketMeta>();
 const ensureMeta = (socket: Socket): TSocketMeta => {
-  let meta = metaMap.get(socket);
-  if (!meta) {
-    const info = resolveSocketUrl(socket);
-    meta = { requestId: genReqId(), url: info.url, namespace: info.namespace };
-    metaMap.set(socket, meta);
+  if (!socketMetaMap.has(socket)) {
+    const { url, namespace } = resolveSocketUrl(socket);
+    const meta: TSocketMeta = {
+      requestId: genReqId(),
+      url,
+      namespace,
+    };
+    socketMetaMap.set(socket, meta);
   }
-  return meta;
+
+  return socketMetaMap.get(socket)!;
 };
