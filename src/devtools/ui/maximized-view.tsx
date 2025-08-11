@@ -113,7 +113,7 @@ const MaximizedView = () => {
           className={combineStyles(searchInputStyle)}
         />
 
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }}>
           <ExportButton />
           <ClearEventsButton />
         </div>
