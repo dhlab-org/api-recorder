@@ -1,11 +1,10 @@
 import { useMemo } from 'react';
-import type { THttpRequestEvent, THttpResponseEvent, TReadableStreamEvent, TRecEvent } from '@/shared/api';
+import type { THttpRequestEvent, THttpResponseEvent, TRecEvent } from '@/shared/api';
 import { HttpDetail } from './http-detail';
 import { SocketIODetail } from './socketio-detail';
-import { StreamDetail } from './stream-detail';
 
 const EventDetail = ({ event }: TProps) => {
-  const { kind, httpReq, httpRes, socketEvents, streamEvents } = useMemo(() => {
+  const { kind, httpReq, httpRes, socketEvents } = useMemo(() => {
     if (event.length === 0) {
       return {
         kind: 'http' as const,
@@ -19,10 +18,9 @@ const EventDetail = ({ event }: TProps) => {
     const httpReq = event.find(e => e.protocol === 'http' && 'method' in e) as THttpRequestEvent | undefined;
     const httpRes = event.find(e => e.protocol === 'http' && 'status' in e) as THttpResponseEvent | undefined;
     const socketEvents = event.filter(e => e.protocol === 'socketio');
-    const streamEvents = event.filter(e => e.protocol === 'readable-stream') as TReadableStreamEvent[];
 
-    const kind = socketEvents.length ? 'socket' : streamEvents.length ? 'stream' : 'http';
-    return { kind, httpReq, httpRes, socketEvents, streamEvents };
+    const kind = socketEvents.length ? 'socket' : 'http';
+    return { kind, httpReq, httpRes, socketEvents };
   }, [event]);
 
   if (event.length === 0) {
@@ -37,10 +35,6 @@ const EventDetail = ({ event }: TProps) => {
 
   if (kind === 'socket') {
     return <SocketIODetail events={socketEvents} selectedRequestId={selectedRequestId} />;
-  }
-
-  if (kind === 'stream') {
-    return <StreamDetail events={streamEvents} selectedRequestId={selectedRequestId} />;
   }
 
   return null;
