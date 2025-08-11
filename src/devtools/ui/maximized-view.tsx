@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useRecordingStore } from '@/entities/record';
+import { ExportButton } from '@/features/export';
 import { ClearEventsButton, ToggleRecordingButton } from '@/features/record';
 import { UiModeControllers } from '@/features/switch-ui-mode';
 import { combineStyles } from '@/shared/lib/utils';
@@ -99,7 +100,10 @@ const MaximizedView = () => {
           className={combineStyles(searchInputStyle)}
         />
 
-        <ClearEventsButton />
+        <div style={{ display: 'flex', gap: 8 }}>
+          <ExportButton />
+          <ClearEventsButton />
+        </div>
       </div>
 
       <div className={mainContentStyle}>{renderTabContent()}</div>
