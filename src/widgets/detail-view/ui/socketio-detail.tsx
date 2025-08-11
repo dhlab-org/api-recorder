@@ -1,8 +1,7 @@
 import { ArrowBigDown, ArrowBigUp } from 'lucide-react';
 import type { ReactNode } from 'react';
-import type { TSocketIOEvent } from '@/shared/api';
+import type { TMessage } from '@/entities/record/types';
 import { fmt, stringifyMaybe } from '@/shared/lib';
-import { CopyButton } from '@/shared/ui/copy-button';
 import {
   badgeRowStyle,
   badgeStyle,
@@ -14,11 +13,35 @@ import {
   metaRowStyle,
   protoBadgeStyle,
   sectionStyle,
-  urlRowStyle,
-  urlTextStyle,
 } from './styles.css';
 
 const SocketIODetail = ({ events, selectedRequestId }: TProps) => {
+  if (events.length === 0) {
+    return (
+      <div className={detailContainerStyle} style={{ minHeight: '200px' }}>
+        <div className={headerStyle}>
+          <div className={badgeRowStyle}>
+            <span className={`${badgeStyle} ${protoBadgeStyle}`}>socket.io</span>
+          </div>
+          <div className={metaRowStyle}>
+            <div className={metaItemStyle}>
+              <span>Request ID</span>
+              <code>{selectedRequestId}</code>
+            </div>
+            <div className={metaItemStyle}>
+              <span>Messages</span>
+              <code>0</code>
+            </div>
+          </div>
+        </div>
+        <div className={dividerStyle} />
+        <div className={sectionStyle}>
+          <p style={{ textAlign: 'center', color: '#666', padding: '20px' }}>메시지가 없습니다.</p>
+        </div>
+      </div>
+    );
+  }
+
   const first = events.reduce((a, b) => (a.timestamp <= b.timestamp ? a : b));
 
   return (
@@ -33,19 +56,10 @@ const SocketIODetail = ({ events, selectedRequestId }: TProps) => {
 export { SocketIODetail };
 
 const HeaderBar = ({ events, firstTimestamp, selectedRequestId }: THeaderBarProps) => {
-  const url = events[0]?.url || '';
-
   return (
     <div className={headerStyle}>
       <div className={badgeRowStyle}>
         <span className={`${badgeStyle} ${protoBadgeStyle}`}>socket.io</span>
-      </div>
-
-      <div className={urlRowStyle}>
-        <span className={urlTextStyle}>{url}</span>
-        <div style={{ display: 'flex', gap: 6 }}>
-          <CopyButton label="Copy URL" value={url} />
-        </div>
       </div>
 
       <div className={metaRowStyle}>
@@ -66,13 +80,13 @@ const HeaderBar = ({ events, firstTimestamp, selectedRequestId }: THeaderBarProp
   );
 };
 
-const SocketTimeline = ({ events }: { events: TSocketIOEvent[] }) => {
+const SocketTimeline = ({ events }: { events: TMessage[] }) => {
   return (
     <section className={sectionStyle}>
       <div style={{ display: 'grid', gap: 10 }}>
-        {events.map(e => (
+        {events.map((e, index) => (
           <TimelineCard
-            key={e.id ?? `${e.timestamp}-${e.event}`}
+            key={`${e.timestamp}-${e.event}-${index}`}
             leftPill={
               e.direction === 'serverToClient' ? (
                 <ArrowBigDown size={12} color="red" style={{ paddingBottom: 3 }} />
@@ -99,20 +113,21 @@ const TimelineCard = ({ leftPill, title, time, payload }: TTimelineCardProps) =>
           <strong>{title}</strong>
           <span style={{ opacity: 0.6, fontSize: 12 }}>{time}</span>
         </div>
-        <CopyButton label="Copy payload" value={stringifyMaybe(payload, true)} />
       </div>
-      <pre className={codeBoxStyle}>{stringifyMaybe(payload, true)}</pre>
+      <div style={{ marginTop: 8 }}>
+        <pre className={codeBoxStyle}>{stringifyMaybe(payload)}</pre>
+      </div>
     </div>
   );
 };
 
 type TProps = {
-  events: TSocketIOEvent[];
+  events: TMessage[];
   selectedRequestId: string;
 };
 
 type THeaderBarProps = {
-  events: TSocketIOEvent[];
+  events: TMessage[];
   firstTimestamp: number;
   selectedRequestId: string;
 };

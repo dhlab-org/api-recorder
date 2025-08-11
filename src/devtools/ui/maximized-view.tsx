@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useRecordingStore } from '@/entities/record';
+import { isSocketIOAvailable, SocketIOInstallPrompt } from '@/entities/websocket';
 import { ExportButton } from '@/features/export';
 import { ClearEventsButton, ToggleRecordingButton } from '@/features/record';
 import { UiModeControllers } from '@/features/switch-ui-mode';
@@ -22,53 +23,65 @@ const MaximizedView = () => {
   const [selectedTab, setSelectedTab] = useState<TTab>('all');
   const [searchValue, setSearchValue] = useState('');
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
-  const { events } = useRecordingStore();
+  const { groupedEvents } = useRecordingStore();
 
   const tabs = [
-    { label: 'All', value: 'all', count: new Set(events.map(e => e.requestId)).size },
+    { label: 'All', value: 'all', count: groupedEvents.length },
     {
       label: 'HTTP',
       value: 'http',
-      count: new Set(events.filter(e => e.protocol === 'http').map(e => e.requestId)).size,
+      count: groupedEvents.filter(g => g.type === 'http-rest').length,
+    },
+    {
+      label: 'Stream',
+      value: 'stream',
+      count: groupedEvents.filter(g => g.type === 'http-stream').length,
     },
     {
       label: 'Socket.io',
       value: 'socketio',
-      count: new Set(events.filter(e => e.protocol === 'socketio').map(e => e.requestId)).size,
-    },
-    {
-      label: 'SSE',
-      value: 'sse',
-      count: new Set(events.filter(e => e.protocol === 'readable-stream').map(e => e.requestId)).size,
+      count: groupedEvents.filter(g => g.type === 'socketio').length,
     },
   ];
 
   const filtered = useMemo(() => {
-    return events.filter(e => {
-      if (selectedTab !== 'all' && e.protocol !== (selectedTab === 'sse' ? 'readable-stream' : selectedTab)) {
-        return false;
+    return groupedEvents.filter(group => {
+      if (selectedTab !== 'all') {
+        if (selectedTab === 'http' && group.type !== 'http-rest') return false;
+        if (selectedTab === 'stream' && group.type !== 'http-stream') return false;
+        if (selectedTab === 'socketio' && group.type !== 'socketio') return false;
       }
+
       if (!searchValue) return true;
-      const text = JSON.stringify(e).toLowerCase();
+      const text = JSON.stringify(group).toLowerCase();
       return text.includes(searchValue.toLowerCase());
     });
-  }, [events, selectedTab, searchValue]);
+  }, [groupedEvents, selectedTab, searchValue]);
 
-  const group = useMemo(() => events.filter(e => e.requestId === selectedRequestId), [events, selectedRequestId]);
-
-  const renderTabContent = () => (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: selectedRequestId ? '1fr 1fr' : '1fr',
-        height: '100%',
-        gap: '8px',
-      }}
-    >
-      <EventList events={filtered} selectedRequestId={selectedRequestId} onSelectRequest={setSelectedRequestId} />
-      {selectedRequestId && group.length > 0 && <EventDetail event={group} />}
-    </div>
+  const selectedGroup = useMemo(
+    () => groupedEvents.find(g => g.requestId === selectedRequestId),
+    [groupedEvents, selectedRequestId],
   );
+
+  const renderTabContent = () => {
+    if (selectedTab === 'socketio' && !isSocketIOAvailable()) {
+      return <SocketIOInstallPrompt />;
+    }
+
+    return (
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: selectedRequestId ? '1fr 1fr' : '1fr',
+          height: '100%',
+          gap: '8px',
+        }}
+      >
+        <EventList groups={filtered} selectedRequestId={selectedRequestId} onSelectRequest={setSelectedRequestId} />
+        {selectedRequestId && selectedGroup && <EventDetail group={selectedGroup} />}
+      </div>
+    );
+  };
 
   return (
     <ResizableFrame>
@@ -100,7 +113,7 @@ const MaximizedView = () => {
           className={combineStyles(searchInputStyle)}
         />
 
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }}>
           <ExportButton />
           <ClearEventsButton />
         </div>
@@ -113,4 +126,4 @@ const MaximizedView = () => {
 
 export { MaximizedView };
 
-type TTab = 'all' | 'http' | 'socketio' | 'sse';
+type TTab = 'all' | 'http' | 'stream' | 'socketio';

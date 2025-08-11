@@ -13,7 +13,6 @@ export const headerStyle = style({
 export const toolbarStyle = style({
   display: 'flex',
   alignItems: 'center',
-  justifyContent: 'space-between',
   padding: '8px 12px',
   gap: '20px',
   flexShrink: 0,

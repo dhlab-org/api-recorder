@@ -1,69 +1,54 @@
-import { Socket } from 'socket.io-client';
 import { genReqId, nowMs } from '@/entities/http/utils';
 import type { TRecEvent } from '@/shared/api';
+import { isSocketIOAvailable } from './ui/socketio-install-prompt';
 
 let patched = false;
 
+const socketMetaMap = new WeakMap<any, TSocketMeta>();
+
 const patchSocketIO = ({ pushEvents }: TArgs) => {
   if (patched) return;
-  patched = true;
 
-  // Socket.prototype.emit 패치 (클라이언트 → 서버)
-  const origEmit = Socket.prototype.emit;
-  type EmitParams = Parameters<typeof origEmit>;
-  type EmitReturn = ReturnType<typeof origEmit>;
-  Socket.prototype.emit = function (this: Socket, ...args: EmitParams): EmitReturn {
-    const [ev, ...rest] = args as [string | symbol, ...unknown[]];
-    const meta = ensureMeta(this);
-    const ts = nowMs();
-    pushEvents({
-      id: `${meta.requestId}-c2s-${ts}`,
-      protocol: 'socketio',
-      requestId: meta.requestId,
-      timestamp: ts,
-      url: meta.url,
-      direction: 'clientToServer',
-      namespace: meta.namespace,
-      event: String(ev),
-      data: rest,
-    });
-    return origEmit.apply(this, args as unknown as EmitParams);
-  };
+  if (!isSocketIOAvailable()) {
+    console.warn('socket.io-client is not installed. Socket.IO recording is disabled.');
+    patched = true;
+    return;
+  }
 
-  // Socket.prototype.on 패치 (서버 → 클라이언트)
-  const origOn = Socket.prototype.on;
-  type OnParams = Parameters<typeof origOn>;
-  type OnReturn = ReturnType<typeof origOn>;
-  Socket.prototype.on = function (this: Socket, ...args: OnParams): OnReturn {
-    const [ev, listener] = args as [string | symbol, (...listenerArgs: unknown[]) => void];
-    const wrappedListener = (...listenerArgs: unknown[]) => {
+  try {
+    const { Socket } = require('socket.io-client');
+
+    patched = true;
+
+    // Socket.prototype.emit 패치 (클라이언트 → 서버)
+    const origEmit = Socket.prototype.emit;
+    type EmitParams = Parameters<typeof origEmit>;
+    type EmitReturn = ReturnType<typeof origEmit>;
+    Socket.prototype.emit = function (this: any, ...args: EmitParams): EmitReturn {
+      const [ev, ...rest] = args as [string | symbol, ...unknown[]];
       const meta = ensureMeta(this);
       const ts = nowMs();
       pushEvents({
-        id: `${meta.requestId}-s2c-${ts}`,
+        id: `${meta.requestId}-c2s-${ts}`,
         protocol: 'socketio',
         requestId: meta.requestId,
         timestamp: ts,
         url: meta.url,
-        direction: 'serverToClient',
+        direction: 'clientToServer',
         namespace: meta.namespace,
         event: String(ev),
-        data: listenerArgs,
+        data: rest,
       });
-      return (listener as (...a: unknown[]) => unknown).apply(this as unknown as object, listenerArgs);
+      return origEmit.apply(this, args as unknown as EmitParams);
     };
-    return origOn.call(this, ev as OnParams[0], wrappedListener as OnParams[1]);
-  };
 
-  // Socket.prototype.onAny 패치 (옵션: 모든 서버 → 클라이언트 이벤트 가로채기)
-  type OnAnyFn = (cb: (event: string, ...args: unknown[]) => void) => Socket;
-  const maybeOnAny = (Socket.prototype as unknown as { onAny?: OnAnyFn }).onAny;
-  if (maybeOnAny) {
-    (Socket.prototype as unknown as { onAny: OnAnyFn }).onAny = function (
-      this: Socket,
-      cb: (event: string, ...args: unknown[]) => void,
-    ) {
-      const wrapped = (event: string, ...args: unknown[]) => {
+    // Socket.prototype.on 패치 (서버 → 클라이언트)
+    const origOn = Socket.prototype.on;
+    type OnParams = Parameters<typeof origOn>;
+    type OnReturn = ReturnType<typeof origOn>;
+    Socket.prototype.on = function (this: any, ...args: OnParams): OnReturn {
+      const [ev, listener] = args as [string | symbol, (...listenerArgs: unknown[]) => void];
+      const wrappedListener = (...listenerArgs: unknown[]) => {
         const meta = ensureMeta(this);
         const ts = nowMs();
         pushEvents({
@@ -74,13 +59,44 @@ const patchSocketIO = ({ pushEvents }: TArgs) => {
           url: meta.url,
           direction: 'serverToClient',
           namespace: meta.namespace,
-          event,
-          data: args,
+          event: String(ev),
+          data: listenerArgs,
         });
-        cb(event, ...args);
+        return (listener as (...a: unknown[]) => unknown).apply(this as unknown as object, listenerArgs);
       };
-      return maybeOnAny.call(this, wrapped);
-    } as OnAnyFn;
+      return origOn.call(this, ev as OnParams[0], wrappedListener as OnParams[1]);
+    };
+
+    // Socket.prototype.onAny 패치 (옵션: 모든 서버 → 클라이언트 이벤트 가로채기)
+    type OnAnyFn = (cb: (event: string, ...args: unknown[]) => void) => any;
+    const maybeOnAny = (Socket.prototype as unknown as { onAny?: OnAnyFn }).onAny;
+    if (maybeOnAny) {
+      (Socket.prototype as unknown as { onAny: OnAnyFn }).onAny = function (
+        this: any,
+        cb: (event: string, ...args: unknown[]) => void,
+      ) {
+        const wrapped = (event: string, ...args: unknown[]) => {
+          const meta = ensureMeta(this);
+          const ts = nowMs();
+          pushEvents({
+            id: `${meta.requestId}-s2c-${ts}`,
+            protocol: 'socketio',
+            requestId: meta.requestId,
+            timestamp: ts,
+            url: meta.url,
+            direction: 'serverToClient',
+            namespace: meta.namespace,
+            event,
+            data: args,
+          });
+          cb(event, ...args);
+        };
+        return maybeOnAny.call(this, wrapped);
+      } as OnAnyFn;
+    }
+  } catch (error) {
+    console.warn('Failed to patch Socket.IO:', error);
+    patched = true;
   }
 };
 
@@ -99,31 +115,33 @@ type TSocketMeta = {
 const getProp = (obj: unknown, key: string): unknown =>
   obj && typeof obj === 'object' ? (obj as Record<string, unknown>)[key] : undefined;
 
-const resolveSocketUrl = (socket: Socket): { url: string; namespace?: string } => {
-  const s = socket as unknown as { io?: Record<string, unknown>; nsp?: string };
-  const io = s.io;
-  const namespace = s.nsp;
-  const uri = (getProp(io, 'uri') as string | undefined) || (getProp(io, '_uri') as string | undefined);
-  if (uri) {
-    return { url: namespace && namespace !== '/' ? `${uri}${namespace}` : uri, namespace };
+const resolveSocketUrl = (socket: any): { url: string; namespace?: string } => {
+  // Socket.IO의 내부 구조에서 URL과 네임스페이스 추출
+  const io = getProp(socket, 'io') as unknown as { uri: string; nsp: string };
+  if (io?.uri) {
+    return {
+      url: io.uri,
+      namespace: io.nsp !== '/' ? io.nsp : undefined,
+    };
   }
-  const opts = getProp(io, 'opts') as Record<string, unknown> | undefined;
-  const hostname = (opts?.hostname as string | undefined) || '';
-  const secure = (opts?.secure as boolean | undefined) || false;
-  const port = opts?.port as string | number | undefined;
-  const path = (opts?.path as string | undefined) || '';
-  const scheme = secure ? 'wss' : 'ws';
-  const base = hostname ? `${scheme}://${hostname}${port ? `:${port}` : ''}${path}` : '';
-  return { url: namespace && namespace !== '/' ? `${base}${namespace}` : base, namespace };
+
+  // fallback: 기본값
+  return {
+    url: 'ws://localhost',
+    namespace: undefined,
+  };
 };
 
-const metaMap = new WeakMap<Socket, TSocketMeta>();
-const ensureMeta = (socket: Socket): TSocketMeta => {
-  let meta = metaMap.get(socket);
-  if (!meta) {
-    const info = resolveSocketUrl(socket);
-    meta = { requestId: genReqId(), url: info.url, namespace: info.namespace };
-    metaMap.set(socket, meta);
+const ensureMeta = (socket: any): TSocketMeta => {
+  if (!socketMetaMap.has(socket)) {
+    const { url, namespace } = resolveSocketUrl(socket);
+    const meta: TSocketMeta = {
+      requestId: genReqId(),
+      url,
+      namespace,
+    };
+    socketMetaMap.set(socket, meta);
   }
-  return meta;
+
+  return socketMetaMap.get(socket)!;
 };

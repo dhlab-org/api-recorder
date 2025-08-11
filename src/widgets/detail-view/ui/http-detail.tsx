@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { THttpRequestEvent, THttpResponseEvent } from '@/shared/api';
+import type { THTTPRequest, THTTPResponse } from '@/entities/record';
 import { fmt, stringifyMaybe } from '@/shared/lib';
 import { CopyButton } from '@/shared/ui/copy-button';
 import { KV } from './kv';
@@ -40,7 +40,7 @@ import {
   urlTextStyle,
 } from './styles.css';
 
-const HttpDetail = ({ req, res, selectedRequestId }: TProps) => {
+const HttpDetail = ({ req, res }: TProps) => {
   const [tab, setTab] = useState<'overview' | 'request' | 'response' | 'headers' | 'body' | 'timing'>('overview');
   const [pretty, setPretty] = useState(true);
 
@@ -100,8 +100,8 @@ const HttpDetail = ({ req, res, selectedRequestId }: TProps) => {
         <TimingSection
           reqTs={req.timestamp}
           resTs={res.timestamp}
-          delayMs={res.delayMs ?? 0}
-          durationMs={durationMs ?? 0}
+          delayMs={res.timestamp - req.timestamp || 0}
+          durationMs={durationMs || 0}
         />
       )}
     </div>
@@ -136,7 +136,7 @@ const HeaderBar = ({ req, res, firstTimestamp, methodClass, statusTone }: THeade
           <>
             <div className={metaItemStyle}>
               <span>Delay</span>
-              <code>{res.delayMs ?? 0} ms</code>
+              <code>{res.timestamp - req.timestamp} ms</code>
             </div>
             <div className={metaItemStyle}>
               <span>Duration</span>
@@ -324,7 +324,7 @@ const renderQuery = (url: string) => {
   }
 };
 
-const toCurl = (req: THttpRequestEvent) => {
+const toCurl = (req: THTTPRequest) => {
   const headers = Object.entries((req.headers as Record<string, string>) ?? {})
     .map(([k, v]) => `-H ${shellQuote(`${k}: ${v}`)}`)
     .join(' ');
@@ -363,14 +363,13 @@ const statusBadgeClassMap = {
 } as const;
 
 type TProps = {
-  req: THttpRequestEvent;
-  res?: THttpResponseEvent;
-  selectedRequestId: string;
+  req: THTTPRequest;
+  res?: THTTPResponse;
 };
 
 type THeaderBarProps = {
-  req: THttpRequestEvent;
-  res?: THttpResponseEvent;
+  req: THTTPRequest;
+  res?: THTTPResponse;
   firstTimestamp: number;
   methodClass: string;
   statusTone: 'success' | 'info' | 'warn' | 'error' | 'neutral';
@@ -383,8 +382,8 @@ type TTabsBarProps = {
 };
 
 type TOverviewSectionProps = {
-  req: THttpRequestEvent;
-  res?: THttpResponseEvent;
+  req: THTTPRequest;
+  res?: THTTPResponse;
 };
 
 type THeadersCompareSectionProps = {

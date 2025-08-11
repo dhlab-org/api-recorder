@@ -2,10 +2,9 @@ export type TBaseEvent = {
   /** 내부 식별자 (파일 내 유일) */
   id: string;
   /** 프로토콜 구분 */
-  protocol: 'http' | 'socketio' | 'readable-stream';
+  protocol: 'http' | 'socketio';
   /** 같은 요청/연결 단위를 묶는 키
    * - HTTP: 요청/응답/스트림 이벤트를 하나로 묶음
-   * - SSE: 요청과 그 이후의 모든 이벤트를 묶음
    * - Socket.IO: 하나의 소켓 연결 단위를 묶음
    */
   requestId: string;
@@ -42,9 +41,23 @@ export type THttpResponseEvent = TBaseEvent & {
   error?: boolean;
 };
 
+export type THttpStreamEvent = TBaseEvent & {
+  protocol: 'http';
+  /** 스트림이 연결된 엔드포인트 */
+  url: string;
+  /** SSE의 event 필드 */
+  event?: string;
+  /** data 필드(원본 그대로 직렬화) */
+  data: unknown;
+  /** 이 이벤트까지의 상대 지연(ms) */
+  delayMs?: number;
+  /** 스트림 라이프사이클 힌트 */
+  phase?: 'open' | 'message' | 'error' | 'close';
+};
+
 export type TSocketIOEvent = TBaseEvent & {
   protocol: 'socketio';
-  /** 소켓 엔드포인트 (예: ws://..., wss://..., 또는 연결 경로) */
+  /** 소켓 엔드포인트 (예: ws://..., wss://...) */
   url: string;
   /** 메시지 방향 */
   direction: 'clientToServer' | 'serverToClient';
@@ -58,18 +71,4 @@ export type TSocketIOEvent = TBaseEvent & {
   isBinary?: boolean;
 };
 
-export type TReadableStreamEvent = TBaseEvent & {
-  protocol: 'readable-stream';
-  /** 스트림이 연결된 엔드포인트 (예: GET /events) */
-  url: string;
-  /** SSE의 event 필드 */
-  event?: string;
-  /** data 필드(원본 그대로 직렬화) */
-  data: unknown;
-  /** 이 이벤트까지의 상대 지연(ms) */
-  delayMs?: number;
-  /** 스트림 라이프사이클 힌트 */
-  phase?: 'open' | 'message' | 'error' | 'close';
-};
-
-export type TRecEvent = THttpRequestEvent | THttpResponseEvent | TSocketIOEvent | TReadableStreamEvent;
+export type TRecEvent = THttpRequestEvent | THttpResponseEvent | THttpStreamEvent | TSocketIOEvent;
