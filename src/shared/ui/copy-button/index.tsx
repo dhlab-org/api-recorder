@@ -5,7 +5,10 @@ const CopyButton = ({ label, value }: TProps) => {
     <button
       type="button"
       className={copyBtnStyle}
-      onClick={() => navigator.clipboard.writeText(value ?? '')}
+      onClick={() => {
+        const text = typeof value === 'function' ? value() : value;
+        void navigator.clipboard.writeText(text ?? '');
+      }}
       title="Copy"
     >
       {label}
@@ -17,5 +20,5 @@ export { CopyButton };
 
 type TProps = {
   label: string;
-  value: string;
+  value: string | (() => string);
 };

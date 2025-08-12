@@ -46,7 +46,6 @@ export type THTTPResponse = {
 };
 
 export type TStreamChunk = {
-  event: string;
   data?: unknown;
   delay?: number;
   timestamp: number;

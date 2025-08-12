@@ -110,14 +110,13 @@ const updateGroupWithEvent = (group: TEventGroup, event: TRecEvent): TEventGroup
           streamStartedAt: event.timestamp,
         };
       }
-    } else if ('event' in event && 'phase' in event) {
+    } else if ('phase' in event) {
       if (group.type === 'http-stream') {
         return {
           ...group,
           streamEvents: [
             ...group.streamEvents,
             {
-              event: event.event || '',
               data: event.data,
               delay: event.delayMs,
               timestamp: event.timestamp,
@@ -186,7 +185,7 @@ const useRecordingStore = create<TRecordingState>((set, get) => ({
 
         if (e.protocol === 'http' && 'method' in e) {
           newGroup = createHTTPRestGroup(e);
-        } else if (e.protocol === 'http' && 'event' in e && 'phase' in e) {
+        } else if (e.protocol === 'http' && 'phase' in e) {
           // 스트림 이벤트
           newGroup = {
             requestId: e.requestId,
@@ -200,7 +199,6 @@ const useRecordingStore = create<TRecordingState>((set, get) => ({
             },
             streamEvents: [
               {
-                event: e.event || '',
                 data: e.data,
                 delay: e.delayMs,
                 timestamp: e.timestamp,

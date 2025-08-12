@@ -191,7 +191,7 @@ const StreamSection = ({ events, pretty }: TStreamSectionProps) => {
     <section className={sectionStyle}>
       <div className={sectionTitleStyle}>
         <h3>Stream Events ({events.length})</h3>
-        <CopyButton label="Copy events" value={JSON.stringify(events, null, 2)} />
+        <CopyButton label="Copy events" value={() => JSON.stringify(events, null, 2)} />
       </div>
       <div style={{ display: 'grid', gap: 10 }}>
         {events.map((event, index) => (
@@ -231,7 +231,6 @@ const StreamEventCard = ({ event, pretty }: TStreamEventCardProps) => {
           >
             {event.phase?.toUpperCase() || 'MESSAGE'}
           </span>
-          <strong>{event.event}</strong>
           <span style={{ opacity: 0.6, fontSize: 12 }}>{fmt(event.timestamp)}</span>
         </div>
         {event.delay && <span style={{ fontSize: 11, opacity: 0.7 }}>+{event.delay}ms</span>}
