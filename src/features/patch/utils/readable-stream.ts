@@ -19,13 +19,16 @@ export const handleStreamResponse = ({ res, requestId, url, end, pushEvents }: T
 
 const monitorStreamData = async ({ monitorStream, requestId, url, end, pushEvents }: TMonitorArgs) => {
   let lastTimestamp = end;
-  try {
-    const reader = monitorStream.getReader();
-    const decoder = new TextDecoder();
-    let chunkIndex = 0;
 
+  const reader = monitorStream.getReader();
+  const decoder = new TextDecoder();
+  let chunkIndex = 0;
+
+  try {
     while (true) {
-      const { value } = await reader.read();
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value) continue;
 
       const chunk = decoder.decode(value, { stream: true });
       if (chunk.trim()) {
@@ -58,6 +61,10 @@ const monitorStreamData = async ({ monitorStream, requestId, url, end, pushEvent
       phase: 'error',
     };
     pushEvents(streamErrorEvent);
+  } finally {
+    try {
+      reader.releaseLock();
+    } catch {}
   }
 };
 
