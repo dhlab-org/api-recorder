@@ -1,4 +1,5 @@
 import type { THttpStreamEvent, TRecEvent } from '@/shared/api';
+import { createSSEParser } from '@/shared/lib';
 
 export const handleStreamResponse = ({ res, requestId, url, end, pushEvents }: TStreamArgs) => {
   const originalBody = res.body;
@@ -24,6 +25,25 @@ const monitorStreamData = async ({ monitorStream, requestId, url, end, pushEvent
   const decoder = new TextDecoder();
   let chunkIndex = 0;
 
+  const parser = createSSEParser({
+    onEvent: msg => {
+      const now = Date.now();
+      const streamChunkEvent: THttpStreamEvent = {
+        id: `${requestId}-stream-${chunkIndex}`,
+        protocol: 'http',
+        requestId,
+        timestamp: now,
+        url,
+        data: msg.data,
+        delayMs: now - lastTimestamp,
+        phase: 'message',
+      };
+      lastTimestamp = now;
+      pushEvents(streamChunkEvent);
+      chunkIndex++;
+    },
+  });
+
   try {
     while (true) {
       const { done, value } = await reader.read();
@@ -31,22 +51,7 @@ const monitorStreamData = async ({ monitorStream, requestId, url, end, pushEvent
       if (!value) continue;
 
       const chunk = decoder.decode(value, { stream: true });
-      if (chunk.trim()) {
-        const now = Date.now();
-        const streamChunkEvent: THttpStreamEvent = {
-          id: `${requestId}-stream-${chunkIndex}`,
-          protocol: 'http',
-          requestId,
-          timestamp: now,
-          url,
-          data: chunk,
-          delayMs: now - lastTimestamp,
-          phase: 'message',
-        };
-        lastTimestamp = now;
-        pushEvents(streamChunkEvent);
-        chunkIndex++;
-      }
+      if (chunk) parser.feed(chunk);
     }
   } catch (streamError) {
     const now = Date.now();
@@ -62,6 +67,11 @@ const monitorStreamData = async ({ monitorStream, requestId, url, end, pushEvent
     };
     pushEvents(streamErrorEvent);
   } finally {
+    try {
+      const flushed = decoder.decode();
+      if (flushed) parser.feed(flushed);
+      parser.reset({ consume: true });
+    } catch {}
     try {
       reader.releaseLock();
     } catch {}
