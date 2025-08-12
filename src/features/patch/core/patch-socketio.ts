@@ -19,10 +19,7 @@ const patchSocketIO = ({ pushEvents }: TArgs) => {
 
   void (async () => {
     try {
-      const name = 'socket' + '.io' + '-client';
-      const mod = await import(/* @vite-ignore */ name).catch(() => null as unknown);
-      const Socket = (mod && ((mod as any).Socket || (mod as any).default?.Socket)) as unknown;
-      if (!Socket) throw new Error('Socket export not found');
+      const { Socket } = await import('socket.io-client');
 
       g.__API_RECORDER_HAS_SOCKET_IO = true;
       patched.socketio = true;

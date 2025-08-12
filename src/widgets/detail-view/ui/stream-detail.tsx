@@ -231,7 +231,6 @@ const StreamEventCard = ({ event, pretty }: TStreamEventCardProps) => {
           >
             {event.phase?.toUpperCase() || 'MESSAGE'}
           </span>
-          <strong>{event.event}</strong>
           <span style={{ opacity: 0.6, fontSize: 12 }}>{fmt(event.timestamp)}</span>
         </div>
         {event.delay && <span style={{ fontSize: 11, opacity: 0.7 }}>+{event.delay}ms</span>}

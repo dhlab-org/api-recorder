@@ -117,7 +117,6 @@ const updateGroupWithEvent = (group: TEventGroup, event: TRecEvent): TEventGroup
           streamEvents: [
             ...group.streamEvents,
             {
-              event: event.event || '',
               data: event.data,
               delay: event.delayMs,
               timestamp: event.timestamp,
@@ -200,7 +199,6 @@ const useRecordingStore = create<TRecordingState>((set, get) => ({
             },
             streamEvents: [
               {
-                event: e.event || '',
                 data: e.data,
                 delay: e.delayMs,
                 timestamp: e.timestamp,
