@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { THttpRequestEvent, TRecEvent, TRecordingOptions, TSocketIOEvent } from '@/shared/api';
+import { shouldIgnoreEvent } from './should-ignore-event';
 import type { TEventGroup, THTTPRestGroup, TSocketIOGroup } from './types';
 
 type TRecordingState = {
@@ -167,6 +168,9 @@ const useRecordingStore = create<TRecordingState>((set, get) => ({
   pushEvents: (e: TRecEvent) =>
     set(state => {
       if (!state.isRecording) return state;
+
+      const shouldIgnore = shouldIgnoreEvent(state.options.ignore);
+      if (shouldIgnore(e, state.groupedEvents)) return state;
 
       const newEvents = [...state.events, e];
       const existingGroupIndex = state.groupedEvents.findIndex(g => g.requestId === e.requestId);

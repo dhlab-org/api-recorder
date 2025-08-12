@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useRecordingStore } from '@/entities/record';
-import { isSocketIOAvailable, SocketIOInstallPrompt } from '@/entities/websocket';
 import { ExportButton } from '@/features/export';
+import { isSocketIOAvailable, SocketIOInstallPrompt } from '@/features/patch';
 import { ClearEventsButton, ToggleRecordingButton } from '@/features/record';
 import { UiModeControllers } from '@/features/switch-ui-mode';
 import { combineStyles } from '@/shared/lib/utils';

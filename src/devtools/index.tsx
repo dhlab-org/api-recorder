@@ -1,25 +1,29 @@
+'use client';
+
 import { useEffect } from 'react';
-import { patchFetch, patchXHR, unpatchFetch, unpatchXHR } from '@/entities/http';
 import { useRecordingStore } from '@/entities/record';
-import { patchSocketIO } from '@/entities/websocket';
+import { createPatchContext } from '@/features/patch';
 import { OpenDevtoolsButton, useUiModeStore } from '@/features/switch-ui-mode';
+import type { TRecordingOptions } from '@/shared/api';
 import { MaximizedView } from './ui/maximized-view';
 import { MinimizedView } from './ui/minimized-view';
 
-const ApiRecorderDevtools = () => {
+const ApiRecorderDevtools = ({ ignore }: TRecordingOptions) => {
   const { uiMode } = useUiModeStore();
-  const { options, pushEvents } = useRecordingStore();
+  const { pushEvents, setOptions } = useRecordingStore();
 
   useEffect(() => {
-    patchFetch({ options, pushEvents });
-    patchSocketIO({ pushEvents });
-    patchXHR({ options, pushEvents });
+    setOptions({ ignore });
+  }, [ignore, setOptions]);
+
+  useEffect(() => {
+    const patchContext = createPatchContext({ pushEvents });
+    patchContext.patchAll();
 
     return () => {
-      unpatchFetch();
-      unpatchXHR();
+      patchContext.unpatchAll();
     };
-  }, [options, pushEvents]);
+  }, [pushEvents]);
 
   return (
     <>
