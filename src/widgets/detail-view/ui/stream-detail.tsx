@@ -191,7 +191,7 @@ const StreamSection = ({ events, pretty }: TStreamSectionProps) => {
     <section className={sectionStyle}>
       <div className={sectionTitleStyle}>
         <h3>Stream Events ({events.length})</h3>
-        <CopyButton label="Copy events" value={JSON.stringify(events, null, 2)} />
+        <CopyButton label="Copy events" value={() => JSON.stringify(events, null, 2)} />
       </div>
       <div style={{ display: 'grid', gap: 10 }}>
         {events.map((event, index) => (
