@@ -27,12 +27,3 @@ const SocketIOInstallPrompt = () => {
 };
 
 export { SocketIOInstallPrompt };
-
-export const isSocketIOAvailable = (): boolean => {
-  try {
-    require('socket.io-client');
-    return true;
-  } catch {
-    return false;
-  }
-};
