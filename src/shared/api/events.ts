@@ -45,8 +45,6 @@ export type THttpStreamEvent = TBaseEvent & {
   protocol: 'http';
   /** 스트림이 연결된 엔드포인트 */
   url: string;
-  /** SSE의 event 필드 */
-  event?: string;
   /** data 필드(원본 그대로 직렬화) */
   data: unknown;
   /** 이 이벤트까지의 상대 지연(ms) */

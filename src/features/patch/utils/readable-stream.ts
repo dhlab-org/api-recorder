@@ -25,25 +25,7 @@ const monitorStreamData = async ({ monitorStream, requestId, url, end, pushEvent
     let chunkIndex = 0;
 
     while (true) {
-      const { done, value } = await reader.read();
-
-      if (done) {
-        const now = Date.now();
-        const streamEndEvent: THttpStreamEvent = {
-          id: `${requestId}-stream-end`,
-          protocol: 'http',
-          requestId,
-          timestamp: now,
-          url,
-          event: 'close',
-          data: null,
-          delayMs: now - lastTimestamp,
-          phase: 'close',
-        };
-        lastTimestamp = now;
-        pushEvents(streamEndEvent);
-        break;
-      }
+      const { value } = await reader.read();
 
       const chunk = decoder.decode(value, { stream: true });
       if (chunk.trim()) {
@@ -54,7 +36,6 @@ const monitorStreamData = async ({ monitorStream, requestId, url, end, pushEvent
           requestId,
           timestamp: now,
           url,
-          event: 'message',
           data: chunk,
           delayMs: now - lastTimestamp,
           phase: 'message',
@@ -72,7 +53,6 @@ const monitorStreamData = async ({ monitorStream, requestId, url, end, pushEvent
       requestId,
       timestamp: now,
       url,
-      event: 'error',
       data: String(streamError),
       delayMs: now - lastTimestamp,
       phase: 'error',
