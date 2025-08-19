@@ -67,6 +67,15 @@ export type TSocketIOEvent = TBaseEvent & {
   data: unknown[];
   /** 바이너리 여부 표식(있으면 UI에서 길이/hex 등으로 표시) */
   isBinary?: boolean;
+  /** 연결 오류 정보 (connect_error 이벤트일 때만 사용) */
+  reject?: {
+    /** 오류 메시지 */
+    message: string;
+    /** 연결 시도 후 경과 시간(ms) */
+    afterMs?: number;
+    /** 오류 코드 */
+    code?: string;
+  };
 };
 
 export type TRecEvent = THttpRequestEvent | THttpResponseEvent | THttpStreamEvent | TSocketIOEvent;
