@@ -8,7 +8,8 @@
   "exports": {
     ".": {
       "types": "./dist/main.d.ts",
-      "import": "./dist/api-recorder.es.js"
+      "import": "./dist/api-recorder.es.js",
+      "require": "./dist/api-recorder.es.js"
     }
   },
   "files": [
