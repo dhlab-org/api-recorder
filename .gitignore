@@ -38,3 +38,6 @@ node_modules/
 !.yarn/sdks/**              
 !.pnp.cjs                   
 !.pnp.loader.mjs     
+
+
+package.tgz
