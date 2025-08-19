@@ -13,7 +13,7 @@ const EventDetail = ({ group }: TProps) => {
   }
 
   if (group.type === 'socketio') {
-    return <SocketIODetail events={group.messages} selectedRequestId={group.requestId} />;
+    return <SocketIODetail events={group.messages} connection={group.connection} selectedRequestId={group.requestId} />;
   }
 
   return null;

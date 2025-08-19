@@ -25,24 +25,27 @@ const MaximizedView = () => {
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const { groupedEvents } = useRecordingStore();
 
-  const tabs = [
-    { label: 'All', value: 'all', count: groupedEvents.length },
-    {
-      label: 'HTTP',
-      value: 'http',
-      count: groupedEvents.filter(g => g.type === 'http-rest').length,
-    },
-    {
-      label: 'Stream',
-      value: 'stream',
-      count: groupedEvents.filter(g => g.type === 'http-stream').length,
-    },
-    {
-      label: 'Socket.io',
-      value: 'socketio',
-      count: groupedEvents.filter(g => g.type === 'socketio').length,
-    },
-  ];
+  const tabs = useMemo(
+    () => [
+      { label: 'All', value: 'all', count: groupedEvents.length },
+      {
+        label: 'HTTP',
+        value: 'http',
+        count: groupedEvents.filter(g => g.type === 'http-rest').length,
+      },
+      {
+        label: 'Stream',
+        value: 'stream',
+        count: groupedEvents.filter(g => g.type === 'http-stream').length,
+      },
+      {
+        label: 'Socket.io',
+        value: 'socketio',
+        count: groupedEvents.filter(g => g.type === 'socketio').length,
+      },
+    ],
+    [groupedEvents],
+  );
 
   const filtered = useMemo(() => {
     return groupedEvents.filter(group => {
@@ -63,7 +66,7 @@ const MaximizedView = () => {
     [groupedEvents, selectedRequestId],
   );
 
-  const renderTabContent = () => {
+  const renderTabContent = useMemo(() => {
     if (selectedTab === 'socketio' && !isSocketIOAvailable()) {
       return <SocketIOInstallPrompt />;
     }
@@ -81,7 +84,7 @@ const MaximizedView = () => {
         {selectedRequestId && selectedGroup && <EventDetail group={selectedGroup} />}
       </div>
     );
-  };
+  }, [selectedTab, selectedRequestId, filtered, selectedGroup]);
 
   return (
     <ResizableFrame>
@@ -119,7 +122,7 @@ const MaximizedView = () => {
         </div>
       </div>
 
-      <div className={mainContentStyle}>{renderTabContent()}</div>
+      <div className={mainContentStyle}>{renderTabContent}</div>
     </ResizableFrame>
   );
 };

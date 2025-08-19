@@ -1,7 +1,14 @@
 import { create } from 'zustand';
-import type { THttpRequestEvent, TRecEvent, TRecordingOptions, TSocketIOEvent } from '@/shared/api';
+import type {
+  THttpRequestEvent,
+  THttpResponseEvent,
+  THttpStreamEvent,
+  TRecEvent,
+  TRecordingOptions,
+  TSocketIOEvent,
+} from '@/shared/api';
 import { shouldIgnoreEvent } from './should-ignore-event';
-import type { TEventGroup, THTTPRestGroup, TSocketIOGroup } from './types';
+import type { TEventGroup, THTTPRestGroup, THTTPStreamGroup, TSocketIOGroup } from './types';
 
 type TRecordingState = {
   isRecording: boolean;
@@ -15,141 +22,7 @@ type TRecordingState = {
   clearEvents: () => void;
 };
 
-const createHTTPRestGroup = (request: THttpRequestEvent): THTTPRestGroup => ({
-  requestId: request.requestId,
-  type: 'http-rest',
-  request: {
-    method: request.method,
-    url: request.url,
-    headers: request.headers || {},
-    body: request.body,
-    timestamp: request.timestamp,
-  },
-});
-
-const createSocketIOGroup = (event: TSocketIOEvent): TSocketIOGroup => ({
-  requestId: event.requestId,
-  type: 'socketio',
-  connection: {
-    url: event.url,
-    namespace: event.namespace,
-    timestamp: event.timestamp,
-  },
-  messages: [],
-});
-
-const updateGroupWithEvent = (group: TEventGroup, event: TRecEvent): TEventGroup => {
-  if (event.protocol === 'http') {
-    if ('method' in event) {
-      // HTTP 요청
-      if (group.type === 'http-rest' || group.type === 'http-stream') {
-        return group; // 이미 요청이 있음
-      }
-    } else if ('status' in event) {
-      // HTTP 응답
-      if (group.type === 'http-rest') {
-        // 스트리밍 응답인지 확인
-        if (event.isStream) {
-          // http-rest를 http-stream으로 변경
-          return {
-            requestId: group.requestId,
-            type: 'http-stream',
-            request: group.request,
-            response: {
-              status: event.status,
-              statusText: event.statusText,
-              headers: event.headers,
-              body: event.body,
-              error: event.error
-                ? {
-                    message: event.statusText || 'Unknown error',
-                    type: 'http',
-                  }
-                : undefined,
-              timestamp: event.timestamp,
-            },
-            streamEvents: [],
-            streamStartedAt: event.timestamp,
-          };
-        } else {
-          // 일반 HTTP 응답
-          return {
-            ...group,
-            response: {
-              status: event.status,
-              statusText: event.statusText,
-              headers: event.headers,
-              body: event.body,
-              error: event.error
-                ? {
-                    message: event.statusText || 'Unknown error',
-                    type: 'http',
-                  }
-                : undefined,
-              timestamp: event.timestamp,
-            },
-            totalDuration: event.delayMs,
-          };
-        }
-      } else if (group.type === 'http-stream') {
-        return {
-          ...group,
-          response: {
-            status: event.status,
-            statusText: event.statusText,
-            headers: event.headers,
-            body: event.body,
-            error: event.error
-              ? {
-                  message: event.statusText || 'Unknown error',
-                  type: 'http',
-                }
-              : undefined,
-            timestamp: event.timestamp,
-          },
-          streamStartedAt: event.timestamp,
-        };
-      }
-    } else if ('phase' in event) {
-      if (group.type === 'http-stream') {
-        return {
-          ...group,
-          streamEvents: [
-            ...group.streamEvents,
-            {
-              data: event.data,
-              delay: event.delayMs,
-              timestamp: event.timestamp,
-              phase: event.phase,
-            },
-          ],
-          streamEndedAt: event.phase === 'close' ? event.timestamp : group.streamEndedAt,
-        };
-      }
-    }
-  } else if (event.protocol === 'socketio') {
-    if (group.type === 'socketio') {
-      return {
-        ...group,
-        messages: [
-          ...group.messages,
-          {
-            direction: event.direction,
-            event: event.event,
-            data: event.data,
-            timestamp: event.timestamp,
-            isBinary: event.isBinary,
-          },
-        ],
-        closedAt: event.timestamp,
-      };
-    }
-  }
-
-  return group;
-};
-
-const useRecordingStore = create<TRecordingState>((set, get) => ({
+const useRecordingStore = create<TRecordingState>(set => ({
   isRecording: false,
   events: [],
   groupedEvents: [],
@@ -228,3 +101,130 @@ const useRecordingStore = create<TRecordingState>((set, get) => ({
 }));
 
 export { useRecordingStore, type TRecordingState };
+
+const createHTTPRestGroup = (request: THttpRequestEvent): THTTPRestGroup => ({
+  requestId: request.requestId,
+  type: 'http-rest',
+  request: {
+    method: request.method,
+    url: request.url,
+    headers: request.headers || {},
+    body: request.body,
+    timestamp: request.timestamp,
+  },
+});
+
+const createSocketIOGroup = (event: TSocketIOEvent): TSocketIOGroup => ({
+  requestId: event.requestId,
+  type: 'socketio',
+  connection: {
+    url: event.url,
+    namespace: event.namespace,
+    timestamp: event.timestamp,
+    reject: event.event === 'connect_error' ? event.reject : undefined,
+  },
+  messages: [],
+});
+
+const updateHTTPGroup = (
+  group: THTTPRestGroup | THTTPStreamGroup,
+  event: THttpRequestEvent | THttpResponseEvent | THttpStreamEvent,
+): TEventGroup => {
+  if ('method' in event) {
+    // HTTP 요청 - 이미 요청이 있으므로 그대로 반환
+    return group;
+  }
+
+  if ('status' in event) {
+    // HTTP 응답
+    const response = {
+      status: event.status,
+      statusText: event.statusText,
+      headers: event.headers,
+      body: event.body,
+      error: event.error
+        ? {
+            message: event.statusText || 'Unknown error',
+            type: 'http' as const,
+          }
+        : undefined,
+      timestamp: event.timestamp,
+    };
+
+    if (event.isStream) {
+      // 스트리밍 응답으로 변경
+      return {
+        requestId: group.requestId,
+        type: 'http-stream',
+        request: group.request,
+        response,
+        streamEvents: [],
+        streamStartedAt: event.timestamp,
+      };
+    } else {
+      // 일반 HTTP 응답
+      return {
+        ...group,
+        response,
+        totalDuration: event.delayMs,
+      };
+    }
+  }
+
+  if ('phase' in event) {
+    // 스트림 이벤트
+    if (group.type === 'http-stream') {
+      return {
+        ...group,
+        streamEvents: [
+          ...group.streamEvents,
+          {
+            data: event.data,
+            delay: event.delayMs,
+            timestamp: event.timestamp,
+            phase: event.phase,
+          },
+        ],
+        streamEndedAt: event.phase === 'close' ? event.timestamp : group.streamEndedAt,
+      };
+    }
+  }
+
+  return group;
+};
+
+const updateSocketIOGroup = (group: TSocketIOGroup, event: TSocketIOEvent): TSocketIOGroup => {
+  return {
+    ...group,
+    connection: {
+      ...group.connection,
+      reject: event.event === 'connect_error' ? event.reject : undefined,
+    },
+    messages: [
+      ...group.messages,
+      {
+        direction: event.direction,
+        event: event.event,
+        data: event.data,
+        timestamp: event.timestamp,
+        isBinary: event.isBinary,
+      },
+    ],
+    closedAt: event.timestamp,
+  };
+};
+
+const updateGroupWithEvent = (group: TEventGroup, event: TRecEvent): TEventGroup => {
+  if (event.protocol === 'http') {
+    return updateHTTPGroup(
+      group as THTTPRestGroup | THTTPStreamGroup,
+      event as THttpRequestEvent | THttpResponseEvent | THttpStreamEvent,
+    );
+  } else if (event.protocol === 'socketio') {
+    if (group.type === 'socketio') {
+      return updateSocketIOGroup(group, event as TSocketIOEvent);
+    }
+  }
+
+  return group;
+};

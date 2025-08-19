@@ -60,6 +60,11 @@ export type TSocketIOGroup = {
     url: string;
     namespace?: string;
     timestamp: number;
+    reject?: {
+      message: string;
+      afterMs?: number;
+      code?: string;
+    };
   };
   /** 해당 연결의 모든 메시지들 */
   messages: TMessage[];
