@@ -84,6 +84,29 @@ const patchSocketOn = ({ Socket, pushEvents }: TPatchArgs) => {
       const meta = ensureMeta({ socket: this });
       const ts = Date.now();
 
+      if (String(ev) === 'connect_error') {
+        // connect_error 이벤트를 reject 필드와 함께 기록
+        const errorData = listenerArgs[0] as Error;
+
+        pushEvents({
+          id: `${meta.requestId}-s2c-${ts}`,
+          protocol: 'socketio',
+          requestId: meta.requestId,
+          timestamp: ts,
+          url: meta.url,
+          direction: 'serverToClient',
+          namespace: meta.namespace,
+          event: String(ev),
+          data: listenerArgs,
+          reject: {
+            message: errorData?.message || 'Connection failed',
+            afterMs: 1000,
+            code: errorData?.name || 'CONNECT_ERROR',
+          },
+        });
+        return (listener as (...a: unknown[]) => unknown).apply(this as unknown as object, listenerArgs);
+      }
+
       pushEvents({
         id: `${meta.requestId}-s2c-${ts}`,
         protocol: 'socketio',
