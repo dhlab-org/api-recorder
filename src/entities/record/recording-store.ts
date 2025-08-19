@@ -102,13 +102,19 @@ const useRecordingStore = create<TRecordingState>(set => ({
 
 export { useRecordingStore, type TRecordingState };
 
+const filterSensitiveHeaders = (headers: Record<string, string> = {}): Record<string, string> => {
+  // biome-ignore lint: authorization is intentionally destructured to remove it
+  const { Authorization, ...filteredHeaders } = headers;
+  return filteredHeaders;
+};
+
 const createHTTPRestGroup = (request: THttpRequestEvent): THTTPRestGroup => ({
   requestId: request.requestId,
   type: 'http-rest',
   request: {
     method: request.method,
     url: request.url,
-    headers: request.headers || {},
+    headers: filterSensitiveHeaders(request.headers),
     body: request.body,
     timestamp: request.timestamp,
   },
@@ -140,7 +146,7 @@ const updateHTTPGroup = (
     const response = {
       status: event.status,
       statusText: event.statusText,
-      headers: event.headers,
+      headers: filterSensitiveHeaders(event.headers),
       body: event.body,
       error: event.error
         ? {
