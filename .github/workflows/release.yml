@@ -28,6 +28,10 @@ jobs:
           corepack enable
           corepack prepare yarn@4.9.2 --activate
           yarn --version
+          yarn config set enableGlobalCache false
+
+      - name: 캐시 정리
+        run: yarn cache clean
 
       - name: 의존성 설치
         run: yarn install --immutable
