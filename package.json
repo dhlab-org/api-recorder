@@ -1,6 +1,6 @@
 {
   "name": "@dhlab/api-recorder",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "main": "./dist/api-recorder.es.js",
   "module": "./dist/api-recorder.es.js",
