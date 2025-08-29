@@ -27,8 +27,7 @@ const patchSocketIO = ({ pushEvents }: TArgs) => {
       patchSocketEmit({ Socket, pushEvents });
       patchSocketOn({ Socket, pushEvents });
       patchSocketOnAny({ Socket, pushEvents });
-    } catch (error) {
-      console.warn('Failed to patch Socket.IO:', error);
+    } catch {
       patched.socketio = true;
     } finally {
       g.__API_RECORDER_SOCKETIO_PATCHING = false;
