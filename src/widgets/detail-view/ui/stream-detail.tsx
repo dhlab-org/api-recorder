@@ -126,28 +126,60 @@ const HeaderBar = ({ req, res, streamEvents, firstTimestamp, methodClass, status
   );
 };
 
-const TabsBar = ({ tab, onChange, show }: TTabsBarProps) => {
-  const Btn = ({ id, label, hidden, disabled }: any) => {
-    if (hidden) return null;
-    const active = tab === id;
-    return (
-      <button
-        type="button"
-        className={active ? tabTriggerActiveStyle : tabTriggerInactiveStyle}
-        onClick={() => !disabled && onChange(id)}
-        disabled={disabled}
-      >
-        {label}
-      </button>
-    );
-  };
+const TabButton = ({
+  label,
+  hidden,
+  disabled,
+  active,
+  onClick,
+}: {
+  label: string;
+  hidden?: boolean;
+  disabled?: boolean;
+  active: boolean;
+  onClick: () => void;
+}) => {
+  if (hidden) return null;
+  return (
+    <button
+      type="button"
+      className={active ? tabTriggerActiveStyle : tabTriggerInactiveStyle}
+      onClick={() => !disabled && onClick()}
+      disabled={disabled}
+    >
+      {label}
+    </button>
+  );
+};
 
+const TabsBar = ({ tab, onChange, show }: TTabsBarProps) => {
   return (
     <div className={tabsStyle}>
-      <Btn id="overview" label="Overview" hidden={!show.overview} />
-      <Btn id="stream" label="Stream Events" hidden={!show.stream} />
-      <Btn id="request" label="Request" hidden={!show.request} />
-      <Btn id="response" label="Response" hidden={!show.response} disabled={!show.response} />
+      <TabButton
+        label="Overview"
+        hidden={!show.overview}
+        active={tab === 'overview'}
+        onClick={() => onChange('overview')}
+      />
+      <TabButton
+        label="Stream Events"
+        hidden={!show.stream}
+        active={tab === 'stream'}
+        onClick={() => onChange('stream')}
+      />
+      <TabButton
+        label="Request"
+        hidden={!show.request}
+        active={tab === 'request'}
+        onClick={() => onChange('request')}
+      />
+      <TabButton
+        label="Response"
+        hidden={!show.response}
+        disabled={!show.response}
+        active={tab === 'response'}
+        onClick={() => onChange('response')}
+      />
     </div>
   );
 };
@@ -195,7 +227,7 @@ const StreamSection = ({ events, pretty }: TStreamSectionProps) => {
       </div>
       <div style={{ display: 'grid', gap: 10 }}>
         {events.map((event, index) => (
-          <StreamEventCard key={index} event={event} pretty={pretty} />
+          <StreamEventCard key={`${event.timestamp}-${index}`} event={event} pretty={pretty} />
         ))}
       </div>
     </section>
@@ -231,6 +263,20 @@ const StreamEventCard = ({ event, pretty }: TStreamEventCardProps) => {
           >
             {event.phase?.toUpperCase() || 'MESSAGE'}
           </span>
+          {event.type && (
+            <span
+              style={{
+                backgroundColor: '#6B7280',
+                color: 'white',
+                padding: '2px 6px',
+                borderRadius: 3,
+                fontSize: 10,
+                fontWeight: 'normal',
+              }}
+            >
+              {event.type}
+            </span>
+          )}
           <span style={{ opacity: 0.6, fontSize: 12 }}>{fmt(event.timestamp)}</span>
         </div>
         {event.delay && <span style={{ fontSize: 11, opacity: 0.7 }}>+{event.delay}ms</span>}
@@ -335,8 +381,8 @@ type THeaderBarProps = {
 };
 
 type TTabsBarProps = {
-  tab: string;
-  onChange: (t: any) => void;
+  tab: 'overview' | 'stream' | 'request' | 'response';
+  onChange: (t: 'overview' | 'stream' | 'request' | 'response') => void;
   show: Record<'overview' | 'stream' | 'request' | 'response', boolean>;
 };
 

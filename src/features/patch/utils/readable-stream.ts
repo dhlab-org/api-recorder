@@ -37,6 +37,7 @@ const monitorStreamData = async ({ monitorStream, requestId, url, end, pushEvent
         data: msg.data,
         delayMs: now - lastTimestamp,
         phase: 'message',
+        type: msg.event,
       };
       lastTimestamp = now;
       pushEvents(streamChunkEvent);

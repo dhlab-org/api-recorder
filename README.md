@@ -118,7 +118,7 @@ function App() {
     "timestamp": 1730000000050
   },
   "streamEvents": [
-    {"data": "{\"id\":1}\n{\"id\":2}", "delay": 120, "timestamp": 1730000000170, "phase": "message"}
+    {"data": "{\"id\":1}\n{\"id\":2}", "delay": 120, "timestamp": 1730000000170, "phase": "message", "type": "message_delta"}
   ],
   "streamStartedAt": 1730000000050,
   "streamEndedAt": 1730000000400

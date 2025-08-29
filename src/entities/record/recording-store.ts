@@ -189,6 +189,7 @@ const updateHTTPGroup = (
             delay: event.delayMs,
             timestamp: event.timestamp,
             phase: event.phase,
+            type: event.type,
           },
         ],
         streamEndedAt: event.phase === 'close' ? event.timestamp : group.streamEndedAt,
