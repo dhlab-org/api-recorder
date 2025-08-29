@@ -51,6 +51,8 @@ export type THttpStreamEvent = TBaseEvent & {
   delayMs?: number;
   /** 스트림 라이프사이클 힌트 */
   phase?: 'open' | 'message' | 'error' | 'close';
+  /** SSE 이벤트 타입 */
+  type?: string;
 };
 
 export type TSocketIOEvent = TBaseEvent & {

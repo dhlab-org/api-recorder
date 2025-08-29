@@ -50,6 +50,7 @@ export type TStreamChunk = {
   delay?: number;
   timestamp: number;
   phase?: 'open' | 'message' | 'error' | 'close';
+  type?: string;
 };
 
 export type TSocketIOGroup = {
