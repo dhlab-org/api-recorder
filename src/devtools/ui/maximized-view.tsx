@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
-import { useRecordingStore } from '@/entities/record';
+import { useEventStore } from '@/entities/event';
+import { ClearEventsButton, ToggleRecordingButton } from '@/entities/record';
 import { ExportButton } from '@/features/export';
 import { isSocketIOAvailable, SocketIOInstallPrompt } from '@/features/patch';
-import { ClearEventsButton, ToggleRecordingButton } from '@/features/record';
 import { UiModeControllers } from '@/features/switch-ui-mode';
 import { combineStyles } from '@/shared/lib/utils';
 import { Input, ResizableFrame } from '@/shared/ui';
@@ -23,7 +23,7 @@ const MaximizedView = () => {
   const [selectedTab, setSelectedTab] = useState<TTab>('all');
   const [searchValue, setSearchValue] = useState('');
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
-  const { groupedEvents } = useRecordingStore();
+  const { groupedEvents } = useEventStore();
 
   const tabs = useMemo(
     () => [

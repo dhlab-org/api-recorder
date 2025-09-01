@@ -1,7 +1,6 @@
 import { useRecordingStore } from '@/entities/record';
 import { combineStyles } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui';
-import { useRecordingActions } from '../hooks/use-recording-actions';
 import {
   buttonTextStyle,
   containerStyle,
@@ -18,11 +17,10 @@ import {
   toggleButtonStyle,
   waitingIndicatorStyle,
   waitingTextStyle,
-} from './toggle-recording-button.css';
+} from '../css/toggle-recording-button.css';
 
 const ToggleRecordingButton = () => {
-  const { toggle: toggleRecording } = useRecordingActions();
-  const { isRecording } = useRecordingStore();
+  const { isRecording, toggleRecording } = useRecordingStore();
 
   return (
     <div className={containerStyle}>
