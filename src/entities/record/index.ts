@@ -1,2 +1,1 @@
-export * from './recording-store';
-export * from './types';
+export * from './model/recording-store';
