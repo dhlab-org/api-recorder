@@ -56,14 +56,6 @@ export const inactiveTabStyle = style({
   },
 });
 
-export const searchInputStyle = style({
-  fontSize: '12px',
-  backgroundColor: '#1f2937',
-  borderColor: '#4b5563',
-  color: 'white',
-  width: '144px',
-});
-
 export const scrollContentStyle = style({
   padding: '8px',
 });

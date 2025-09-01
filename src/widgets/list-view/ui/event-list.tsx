@@ -1,4 +1,4 @@
-import type { TEventGroup } from '@/entities/record';
+import type { TGroupedEvent } from '@/entities/event';
 import {
   cellStyle,
   listContainerStyle,
@@ -61,7 +61,7 @@ const EventList = ({ groups, selectedRequestId, onSelectRequest }: TProps) => {
 export { EventList };
 
 type TProps = {
-  groups: TEventGroup[];
+  groups: TGroupedEvent[];
   selectedRequestId: string | null;
   onSelectRequest: (requestId: string) => void;
 };

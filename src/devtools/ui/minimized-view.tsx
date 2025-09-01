@@ -1,4 +1,4 @@
-import { ToggleRecordingButton } from '@/features/record';
+import { ToggleRecordingButton } from '@/entities/record';
 import { UiModeControllers } from '@/features/switch-ui-mode';
 import { minimizedContainerStyle } from '../css/minimized-view.css';
 

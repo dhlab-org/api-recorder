@@ -5,7 +5,7 @@ import { ExportButton } from '@/features/export';
 import { isSocketIOAvailable, SocketIOInstallPrompt } from '@/features/patch';
 import { UiModeControllers } from '@/features/switch-ui-mode';
 import { combineStyles } from '@/shared/lib/utils';
-import { Input, ResizableFrame } from '@/shared/ui';
+import { ResizableFrame } from '@/shared/ui';
 import { EventDetail } from '@/widgets/detail-view';
 import { EventList } from '@/widgets/list-view';
 import {
@@ -13,18 +13,20 @@ import {
   headerStyle,
   inactiveTabStyle,
   mainContentStyle,
-  searchInputStyle,
   tabsContainerStyle,
   tabTriggerStyle,
   toolbarStyle,
 } from '../css/maximized-view.css.ts';
 
 const MaximizedView = () => {
-  const [selectedTab, setSelectedTab] = useState<TTab>('all');
-  const [searchValue, setSearchValue] = useState('');
-  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const { groupedEvents } = useEventStore();
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
+  const selectedGroup = useMemo(
+    () => groupedEvents.find(g => g.requestId === selectedRequestId),
+    [groupedEvents, selectedRequestId],
+  );
 
+  const [selectedTab, setSelectedTab] = useState<TTab>('all');
   const tabs = useMemo(
     () => [
       { label: 'All', value: 'all', count: groupedEvents.length },
@@ -55,36 +57,9 @@ const MaximizedView = () => {
         if (selectedTab === 'socketio' && group.type !== 'socketio') return false;
       }
 
-      if (!searchValue) return true;
-      const text = JSON.stringify(group).toLowerCase();
-      return text.includes(searchValue.toLowerCase());
+      return JSON.stringify(group).toLowerCase();
     });
-  }, [groupedEvents, selectedTab, searchValue]);
-
-  const selectedGroup = useMemo(
-    () => groupedEvents.find(g => g.requestId === selectedRequestId),
-    [groupedEvents, selectedRequestId],
-  );
-
-  const renderTabContent = useMemo(() => {
-    if (selectedTab === 'socketio' && !isSocketIOAvailable()) {
-      return <SocketIOInstallPrompt />;
-    }
-
-    return (
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: selectedRequestId ? '1fr 1fr' : '1fr',
-          height: '100%',
-          gap: '8px',
-        }}
-      >
-        <EventList groups={filtered} selectedRequestId={selectedRequestId} onSelectRequest={setSelectedRequestId} />
-        {selectedRequestId && selectedGroup && <EventDetail group={selectedGroup} />}
-      </div>
-    );
-  }, [selectedTab, selectedRequestId, filtered, selectedGroup]);
+  }, [groupedEvents, selectedTab]);
 
   return (
     <ResizableFrame>
@@ -109,12 +84,6 @@ const MaximizedView = () => {
             </button>
           ))}
         </div>
-        <Input
-          placeholder="검색..."
-          value={searchValue}
-          onChange={e => setSearchValue(e.target.value)}
-          className={combineStyles(searchInputStyle)}
-        />
 
         <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }}>
           <ExportButton />
@@ -122,7 +91,23 @@ const MaximizedView = () => {
         </div>
       </div>
 
-      <div className={mainContentStyle}>{renderTabContent}</div>
+      <div className={mainContentStyle}>
+        {selectedTab === 'socketio' && !isSocketIOAvailable() ? (
+          <SocketIOInstallPrompt />
+        ) : (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: selectedRequestId ? '1fr 1fr' : '1fr',
+              height: '100%',
+              gap: '8px',
+            }}
+          >
+            <EventList groups={filtered} selectedRequestId={selectedRequestId} onSelectRequest={setSelectedRequestId} />
+            {selectedRequestId && selectedGroup && <EventDetail group={selectedGroup} />}
+          </div>
+        )}
+      </div>
     </ResizableFrame>
   );
 };

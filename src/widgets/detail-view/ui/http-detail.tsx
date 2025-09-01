@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { THTTPRequest, THTTPResponse } from '@/entities/record';
+import type { THTTPRequest, THTTPResponse } from '@/entities/event';
 import { fmt, stringifyMaybe } from '@/shared/lib';
 import { CopyButton } from '@/shared/ui/copy-button';
 import { KV } from './kv';
@@ -404,6 +404,7 @@ type TProps = {
   req: THTTPRequest;
   res?: THTTPResponse;
 };
+
 type THeaderBarProps = {
   req: THTTPRequest;
   res?: THTTPResponse;
