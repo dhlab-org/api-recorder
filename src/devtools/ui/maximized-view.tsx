@@ -17,7 +17,7 @@ import {
   tabsContainerStyle,
   tabTriggerStyle,
   toolbarStyle,
-} from './maximized-view.css';
+} from '../css/maximized-view.css.ts';
 
 const MaximizedView = () => {
   const [selectedTab, setSelectedTab] = useState<TTab>('all');
