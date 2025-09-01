@@ -1,5 +1,5 @@
 import type { THttpStreamChunkEvent, TSingleEvent } from '@/entities/event';
-import { createSSEParser } from '@/shared/lib';
+import { createSSEParser } from './sse-parser';
 
 export const handleStreamResponse = ({ res, requestId, url, end, pushEvent }: TStreamArgs) => {
   const originalBody = res.body;
