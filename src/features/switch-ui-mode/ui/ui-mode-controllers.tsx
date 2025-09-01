@@ -1,8 +1,8 @@
 import { Maximize2, Minimize2, X } from 'lucide-react';
 import { combineStyles } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui';
+import { closeButton, controlButton, controllersContainer } from '../css/ui-mode-controllers.css';
 import { useUiModeStore } from '../models/ui-mode-store';
-import { closeButton, controlButton, controllersContainer } from './ui-mode-controllers.css';
 
 const UiModeControllers = ({ buttons }: TProps) => {
   const { setUiMode } = useUiModeStore();
