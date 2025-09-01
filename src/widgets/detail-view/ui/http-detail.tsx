@@ -149,30 +149,68 @@ const HeaderBar = ({ req, res, firstTimestamp, methodClass, statusTone }: THeade
   );
 };
 
-const TabsBar = ({ tab, onChange, show }: TTabsBarProps) => {
-  const Btn = ({ id, label, hidden, disabled }: any) => {
-    if (hidden) return null;
-    const active = tab === id;
-    return (
-      <button
-        type="button"
-        className={active ? tabTriggerActiveStyle : tabTriggerInactiveStyle}
-        onClick={() => !disabled && onChange(id)}
-        disabled={disabled}
-      >
-        {label}
-      </button>
-    );
-  };
+const TabButton = ({
+  label,
+  hidden,
+  disabled,
+  active,
+  onClick,
+}: {
+  label: string;
+  hidden?: boolean;
+  disabled?: boolean;
+  active: boolean;
+  onClick: () => void;
+}) => {
+  if (hidden) return null;
+  return (
+    <button
+      type="button"
+      className={active ? tabTriggerActiveStyle : tabTriggerInactiveStyle}
+      onClick={() => !disabled && onClick()}
+      disabled={disabled}
+    >
+      {label}
+    </button>
+  );
+};
 
+const TabsBar = ({ tab, onChange, show }: TTabsBarProps) => {
   return (
     <div className={tabsStyle}>
-      <Btn id="overview" label="Overview" hidden={!show.overview} />
-      <Btn id="request" label="Request" hidden={!show.request} />
-      <Btn id="response" label="Response" hidden={!show.response} disabled={!show.response} />
-      <Btn id="headers" label="Headers" hidden={!show.headers} />
-      <Btn id="body" label="Body" hidden={!show.body} />
-      <Btn id="timing" label="Timing" hidden={!show.timing} disabled={!show.timing} />
+      <TabButton
+        label="Overview"
+        hidden={!show.overview}
+        active={tab === 'overview'}
+        onClick={() => onChange('overview')}
+      />
+      <TabButton
+        label="Request"
+        hidden={!show.request}
+        active={tab === 'request'}
+        onClick={() => onChange('request')}
+      />
+      <TabButton
+        label="Response"
+        hidden={!show.response}
+        disabled={!show.response}
+        active={tab === 'response'}
+        onClick={() => onChange('response')}
+      />
+      <TabButton
+        label="Headers"
+        hidden={!show.headers}
+        active={tab === 'headers'}
+        onClick={() => onChange('headers')}
+      />
+      <TabButton label="Body" hidden={!show.body} active={tab === 'body'} onClick={() => onChange('body')} />
+      <TabButton
+        label="Timing"
+        hidden={!show.timing}
+        disabled={!show.timing}
+        active={tab === 'timing'}
+        onClick={() => onChange('timing')}
+      />
     </div>
   );
 };
@@ -366,7 +404,6 @@ type TProps = {
   req: THTTPRequest;
   res?: THTTPResponse;
 };
-
 type THeaderBarProps = {
   req: THTTPRequest;
   res?: THTTPResponse;
@@ -376,8 +413,8 @@ type THeaderBarProps = {
 };
 
 type TTabsBarProps = {
-  tab: string;
-  onChange: (t: any) => void;
+  tab: 'overview' | 'request' | 'response' | 'headers' | 'body' | 'timing';
+  onChange: (t: 'overview' | 'request' | 'response' | 'headers' | 'body' | 'timing') => void;
   show: Record<'overview' | 'request' | 'response' | 'headers' | 'body' | 'timing', boolean>;
 };
 
