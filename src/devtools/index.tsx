@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useEventStore } from '@/entities/event';
+import { useRecordingStore } from '@/entities/record';
 import { createPatchContext } from '@/features/patch';
 import { OpenDevtoolsButton, useUiModeStore } from '@/features/switch-ui-mode';
 import { MaximizedView } from './ui/maximized-view';
@@ -16,7 +17,13 @@ const ApiRecorderDevtools = ({ ignore }: TDevtoolOptions) => {
   }, [ignore, setIgnore]);
 
   useEffect(() => {
-    const patchContext = createPatchContext({ pushEvent });
+    const patchContext = createPatchContext({
+      pushEvent: event => {
+        const { isRecording } = useRecordingStore.getState();
+        if (isRecording) pushEvent(event);
+      },
+    });
+
     patchContext.patchAll();
 
     return () => {
