@@ -17,4 +17,5 @@ export type TXhrMeta = {
   body?: unknown;
   requestId?: string;
   start?: number;
+  __apiRecorderSuppress?: boolean;
 };

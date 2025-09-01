@@ -1,9 +1,9 @@
-import type { THttpRequestEvent, THttpResponseEvent, TRecEvent } from '@/shared/api';
+import type { THttpRequestEvent, THttpRestResponseEvent, THttpStreamChunkEvent, TSingleEvent } from '@/entities/event';
 import type { TState } from '../types';
 import { cloneBody } from '../utils/http';
-import { handleStreamResponse } from '../utils/readable-stream';
+import { handleStreamResponse as handleStreamDataProcessing } from '../utils/readable-stream';
 
-const patchFetch = ({ state, pushEvents }: TArgs) => {
+const patchFetch = ({ state, pushEvent }: TArgs) => {
   const g = globalThis as unknown as {
     __API_RECORDER_PATCHED?: { fetch: boolean; xhr: boolean; socketio: boolean };
     __API_RECORDER_ORIGINAL_FETCH?: typeof window.fetch;
@@ -17,79 +17,174 @@ const patchFetch = ({ state, pushEvents }: TArgs) => {
 
   state.originalFetch = g.__API_RECORDER_ORIGINAL_FETCH;
 
-  window.fetch = patchedFetch({ state, pushEvents });
+  window.fetch = patchedFetch({ state, pushEvent });
 };
 
 export { patchFetch };
 
-const patchedFetch = ({ state, pushEvents }: TArgs) => {
+const patchedFetch = ({ state, pushEvent }: TArgs) => {
   return async function (this: Window, input: RequestInfo | URL, init?: RequestInit) {
-    const url = resolveUrl(input);
+    const requestContext = await createRequestContext(input, init);
+    const requestEvent = createRequestEvent(requestContext);
 
-    const requestId = Math.random().toString(36).slice(2);
-    const start = Date.now();
-    const method = resolveMethod(input, init);
-
-    const headers = toHeaderRecord(init?.headers) || {};
-    const body = init?.body !== undefined ? await cloneBody(init.body as BodyInit) : undefined;
-
-    const reqEvent: THttpRequestEvent = {
-      id: `${requestId}-req`,
-      protocol: 'http',
-      requestId,
-      timestamp: start,
-      method,
-      url,
-      headers,
-      body,
-    };
-
-    pushEvents(reqEvent);
+    pushEvent(requestEvent);
 
     try {
-      const g = globalThis as unknown as { __API_RECORDER_ORIGINAL_FETCH?: typeof window.fetch };
-      const original = state.originalFetch || g.__API_RECORDER_ORIGINAL_FETCH || window.fetch;
-      const res = await original.call(this, input, init);
-      const end = Date.now();
+      const response = await executeOriginalFetch(state, input, init);
+      const responseContext = createResponseContext(requestContext, response);
 
-      const isStream = detectStream(res);
-      const responseBody = !isStream ? await tryReadBody(res) : undefined;
-
-      const resEvent: THttpResponseEvent = {
-        id: `${requestId}-res`,
-        protocol: 'http',
-        requestId,
-        timestamp: end,
-        status: res.status,
-        statusText: res.statusText,
-        headers: toHeaderRecord(res.headers),
-        body: responseBody,
-        delayMs: end - start,
-        isStream,
-      };
-      pushEvents(resEvent);
-
-      if (isStream && res.body) {
-        return handleStreamResponse({ res, requestId, url, end, pushEvents });
-      }
-
-      return res;
-    } catch (err) {
-      const end = Date.now();
-      const errEvent: THttpResponseEvent = {
-        id: `${requestId}-err`,
-        protocol: 'http',
-        requestId,
-        timestamp: end,
-        status: 0,
-        statusText: String(err),
-        error: true,
-        delayMs: end - start,
-      };
-      pushEvents(errEvent);
-      throw err;
+      return await handleResponse(responseContext, pushEvent);
+    } catch (error) {
+      const errorEvent = createErrorEvent(requestContext, error);
+      pushEvent(errorEvent);
+      throw error;
     }
   };
+};
+
+// ================= Context Creation =================
+
+type TRequestContext = {
+  requestId: string;
+  url: string;
+  method: string;
+  headers: Record<string, string>;
+  body: unknown;
+  timestamp: number;
+};
+
+type TResponseContext = {
+  request: TRequestContext;
+  response: Response;
+  timestamp: number;
+  delayMs: number;
+};
+
+const createRequestContext = async (input: RequestInfo | URL, init?: RequestInit): Promise<TRequestContext> => {
+  const url = resolveUrl(input);
+  const method = resolveMethod(input, init);
+  const headers = toHeaderRecord(init?.headers) || {};
+  const body = init?.body !== undefined ? await cloneBody(init.body as BodyInit) : undefined;
+
+  return {
+    requestId: Math.random().toString(36).slice(2),
+    url,
+    method,
+    headers,
+    body,
+    timestamp: Date.now(),
+  };
+};
+
+const createResponseContext = (requestContext: TRequestContext, response: Response): TResponseContext => {
+  const timestamp = Date.now();
+  return {
+    request: requestContext,
+    response,
+    timestamp,
+    delayMs: timestamp - requestContext.timestamp,
+  };
+};
+
+// ================= Event Creation =================
+
+const createRequestEvent = (context: TRequestContext): THttpRequestEvent => ({
+  id: `${context.requestId}-req`,
+  kind: 'http-request',
+  requestId: context.requestId,
+  timestamp: context.timestamp,
+  method: context.method,
+  url: context.url,
+  headers: context.headers,
+  body: context.body,
+});
+
+const createRestResponseEvent = async (context: TResponseContext): Promise<THttpRestResponseEvent> => {
+  const body = await tryReadBody(context.response);
+
+  return {
+    id: `${context.request.requestId}-res`,
+    kind: 'http-rest-response',
+    requestId: context.request.requestId,
+    timestamp: context.timestamp,
+    url: context.request.url,
+    status: context.response.status,
+    statusText: context.response.statusText,
+    headers: toHeaderRecord(context.response.headers),
+    body,
+    delayMs: context.delayMs,
+  };
+};
+
+const createErrorEvent = (context: TRequestContext, error: unknown): THttpRestResponseEvent => {
+  const timestamp = Date.now();
+
+  return {
+    id: `${context.requestId}-err`,
+    kind: 'http-rest-response',
+    requestId: context.requestId,
+    timestamp,
+    url: context.url,
+    status: 0,
+    statusText: String(error),
+    error: true,
+    delayMs: timestamp - context.timestamp,
+  };
+};
+
+const createStreamStartEvent = (context: TResponseContext): THttpStreamChunkEvent => ({
+  id: `${context.request.requestId}-stream-start`,
+  kind: 'http-stream-chunk',
+  requestId: context.request.requestId,
+  timestamp: context.timestamp,
+  url: context.request.url,
+  data: null,
+  phase: 'open',
+  response: {
+    status: context.response.status,
+    statusText: context.response.statusText,
+    headers: toHeaderRecord(context.response.headers),
+  },
+});
+
+// ================= Core =================
+
+const executeOriginalFetch = async (state: TState, input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+  const g = globalThis as unknown as { __API_RECORDER_ORIGINAL_FETCH?: typeof window.fetch };
+  const original = state.originalFetch || g.__API_RECORDER_ORIGINAL_FETCH || window.fetch;
+  return await original.call(globalThis, input, init);
+};
+
+const handleResponse = async (context: TResponseContext, pushEvent: (e: TSingleEvent) => void): Promise<Response> => {
+  const isStream = detectStream(context.response);
+
+  if (isStream && context.response.body) {
+    return handleStreamResponse(context, pushEvent);
+  }
+
+  return handleRestResponse(context, pushEvent);
+};
+
+const handleRestResponse = async (
+  context: TResponseContext,
+  pushEvent: (e: TSingleEvent) => void,
+): Promise<Response> => {
+  const responseEvent = await createRestResponseEvent(context);
+  pushEvent(responseEvent);
+  return context.response;
+};
+
+const handleStreamResponse = (context: TResponseContext, pushEvent: (e: TSingleEvent) => void): Response => {
+  const streamStartEvent = createStreamStartEvent(context);
+  pushEvent(streamStartEvent);
+
+  return handleStreamDataProcessing({
+    res: context.response,
+    requestId: context.request.requestId,
+    url: context.request.url,
+    end: context.timestamp,
+    pushEvent: pushEvent as (e: unknown) => void,
+  });
 };
 
 const toHeaderRecord = (
@@ -141,7 +236,9 @@ const resolveUrl = (input: RequestInfo | URL): string => {
   }
 };
 
+// ================= Types =================
+
 type TArgs = {
   state: TState;
-  pushEvents: (e: TRecEvent) => void;
+  pushEvent: (e: TSingleEvent) => void;
 };

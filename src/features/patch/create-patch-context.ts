@@ -1,10 +1,10 @@
-import type { TRecEvent } from '@/shared/api';
+import type { TSingleEvent } from '@/entities/event';
 import { patchFetch } from './core/patch-fetch';
 import { patchSocketIO } from './core/patch-socketio';
 import { patchXHR } from './core/patch-xhr';
 import type { TState } from './types';
 
-const createPatchContext = ({ pushEvents }: TArgs) => {
+const createPatchContext = ({ pushEvent }: TArgs) => {
   const state: TState = {
     originalFetch: null,
     xhrMetaMap: new WeakMap(),
@@ -12,9 +12,9 @@ const createPatchContext = ({ pushEvents }: TArgs) => {
 
   return {
     patchAll: () => {
-      patchFetch({ state, pushEvents });
-      patchXHR({ state, pushEvents });
-      patchSocketIO({ pushEvents });
+      patchFetch({ state, pushEvent });
+      patchXHR({ state, pushEvent });
+      patchSocketIO({ pushEvent });
     },
     unpatchAll: () => {
       const g = globalThis as unknown as {
@@ -44,5 +44,5 @@ const createPatchContext = ({ pushEvents }: TArgs) => {
 export { createPatchContext };
 
 type TArgs = {
-  pushEvents: (event: TRecEvent) => void;
+  pushEvent: (event: TSingleEvent) => void;
 };

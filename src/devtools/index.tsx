@@ -1,29 +1,28 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRecordingStore } from '@/entities/record';
+import { useEventStore } from '@/entities/event';
 import { createPatchContext } from '@/features/patch';
 import { OpenDevtoolsButton, useUiModeStore } from '@/features/switch-ui-mode';
-import type { TRecordingOptions } from '@/shared/api';
 import { MaximizedView } from './ui/maximized-view';
 import { MinimizedView } from './ui/minimized-view';
 
-const ApiRecorderDevtools = ({ ignore }: TRecordingOptions) => {
+const ApiRecorderDevtools = ({ ignore }: TDevtoolOptions) => {
   const { uiMode } = useUiModeStore();
-  const { pushEvents, setOptions } = useRecordingStore();
+  const { setIgnore, pushEvent } = useEventStore();
 
   useEffect(() => {
-    setOptions({ ignore });
-  }, [ignore, setOptions]);
+    setIgnore(ignore);
+  }, [ignore, setIgnore]);
 
   useEffect(() => {
-    const patchContext = createPatchContext({ pushEvents });
+    const patchContext = createPatchContext({ pushEvent });
     patchContext.patchAll();
 
     return () => {
       patchContext.unpatchAll();
     };
-  }, [pushEvents]);
+  }, [pushEvent]);
 
   return (
     <>
@@ -35,3 +34,7 @@ const ApiRecorderDevtools = ({ ignore }: TRecordingOptions) => {
 };
 
 export { ApiRecorderDevtools };
+
+type TDevtoolOptions = {
+  ignore?: (string | RegExp)[];
+};
