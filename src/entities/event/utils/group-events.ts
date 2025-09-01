@@ -1,9 +1,8 @@
 import type { TGroupedEvent, THTTPRestGroup, THTTPStreamGroup, TSocketIOGroup } from '../model/grouped-events.types';
 import type {
-  THttpRestRequestEvent,
+  THttpRequestEvent,
   THttpRestResponseEvent,
   THttpStreamChunkEvent,
-  THttpStreamRequestEvent,
   TSingleEvent,
   TSocketIOEvent,
 } from '../model/single-events.types';
@@ -17,14 +16,11 @@ const groupEvents = (events: TSingleEvent[]): TGroupedEvent[] => {
 
   for (const event of events) {
     switch (event.kind) {
-      case 'http-rest-request':
-        processHttpRestRequestEvent(groups, event);
+      case 'http-request':
+        processHttpRequestEvent(groups, event);
         break;
       case 'http-rest-response':
         processHttpRestResponseEvent(groups, event);
-        break;
-      case 'http-stream-request':
-        processHttpStreamRequestEvent(groups, event);
         break;
       case 'http-stream-chunk':
         processHttpStreamChunkEvent(groups, event);
@@ -43,7 +39,7 @@ export { groupEvents };
 /**
  * HTTP REST 요청 이벤트 처리
  */
-const processHttpRestRequestEvent = (groups: Map<string, TGroupedEvent>, event: THttpRestRequestEvent): void => {
+const processHttpRequestEvent = (groups: Map<string, TGroupedEvent>, event: THttpRequestEvent): void => {
   const existing = groups.get(event.requestId);
   if (existing) return;
 
@@ -83,33 +79,24 @@ const processHttpRestResponseEvent = (groups: Map<string, TGroupedEvent>, event:
 };
 
 /**
- * HTTP Stream 요청 이벤트 처리
- */
-const processHttpStreamRequestEvent = (groups: Map<string, TGroupedEvent>, event: THttpStreamRequestEvent): void => {
-  const existing = groups.get(event.requestId);
-  if (existing) return;
-
-  const newGroup: THTTPStreamGroup = {
-    requestId: event.requestId,
-    type: 'http-stream',
-    request: {
-      method: event.method,
-      url: event.url,
-      headers: filterSensitiveHeaders(event.headers),
-      body: event.body,
-      timestamp: event.timestamp,
-    },
-    streamEvents: [],
-  };
-  groups.set(event.requestId, newGroup);
-};
-
-/**
  * HTTP Stream 청크 이벤트 처리
  */
 const processHttpStreamChunkEvent = (groups: Map<string, TGroupedEvent>, event: THttpStreamChunkEvent): void => {
-  const existing = groups.get(event.requestId) as THTTPStreamGroup | undefined;
-  if (!existing || existing.type !== 'http-stream') return;
+  const existing = groups.get(event.requestId);
+
+  // 기존 REST 그룹을 Stream 그룹으로 변환
+  if (existing && existing.type === 'http-rest') {
+    const streamGroup: THTTPStreamGroup = {
+      requestId: existing.requestId,
+      type: 'http-stream',
+      request: existing.request,
+      streamEvents: [],
+    };
+    groups.set(event.requestId, streamGroup);
+  }
+
+  const streamGroup = groups.get(event.requestId) as THTTPStreamGroup | undefined;
+  if (!streamGroup || streamGroup.type !== 'http-stream') return;
 
   const streamChunk = {
     data: event.data,
@@ -120,13 +107,13 @@ const processHttpStreamChunkEvent = (groups: Map<string, TGroupedEvent>, event: 
   };
 
   const updatedGroup: THTTPStreamGroup = {
-    ...existing,
-    streamEvents: [...existing.streamEvents, streamChunk],
-    streamEndedAt: event.phase === 'close' ? event.timestamp : existing.streamEndedAt,
+    ...streamGroup,
+    streamEvents: [...streamGroup.streamEvents, streamChunk],
+    streamEndedAt: event.phase === 'close' ? event.timestamp : streamGroup.streamEndedAt,
   };
 
   // 첫 번째 청크에서 응답 정보 설정
-  if (event.response && !existing.response) {
+  if (event.response && !streamGroup.response) {
     updatedGroup.response = {
       ...event.response,
       headers: filterSensitiveHeaders(event.response.headers),

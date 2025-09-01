@@ -10,9 +10,9 @@ export type TBaseEvent = {
   timestamp: number;
 };
 
-// ================= HTTP REST Events =================
-export type THttpRestRequestEvent = TBaseEvent & {
-  kind: 'http-rest-request';
+// ================= HTTP Events =================
+export type THttpRequestEvent = TBaseEvent & {
+  kind: 'http-request';
   /** 'GET' | 'POST' | ... */
   method: string;
   /** 요청 URL */
@@ -38,15 +38,6 @@ export type THttpRestResponseEvent = TBaseEvent & {
   delayMs?: number;
   /** 에러 상황 표시용 (fetch 예외 등) */
   error?: boolean;
-};
-
-// ================= HTTP Stream Events =================
-export type THttpStreamRequestEvent = TBaseEvent & {
-  kind: 'http-stream-request';
-  method: string;
-  url: string;
-  headers?: Record<string, string>;
-  body?: unknown;
 };
 
 export type THttpStreamChunkEvent = TBaseEvent & {
@@ -95,9 +86,4 @@ export type TSocketIOEvent = TBaseEvent & {
   };
 };
 
-export type TSingleEvent =
-  | THttpRestRequestEvent
-  | THttpRestResponseEvent
-  | THttpStreamRequestEvent
-  | THttpStreamChunkEvent
-  | TSocketIOEvent;
+export type TSingleEvent = THttpRequestEvent | THttpRestResponseEvent | THttpStreamChunkEvent | TSocketIOEvent;
