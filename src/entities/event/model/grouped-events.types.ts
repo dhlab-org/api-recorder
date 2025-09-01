@@ -81,4 +81,4 @@ export type TMessage = {
   isBinary?: boolean;
 };
 
-export type TEventGroup = THTTPRestGroup | THTTPStreamGroup | TSocketIOGroup;
+export type TGroupedEvent = THTTPRestGroup | THTTPStreamGroup | TSocketIOGroup;

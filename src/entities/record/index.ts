@@ -1,2 +1,3 @@
-export * from './recording-store';
-export * from './types';
+export * from './model/recording-store';
+export * from './ui/clear-events-button';
+export * from './ui/toggle-recording-button';

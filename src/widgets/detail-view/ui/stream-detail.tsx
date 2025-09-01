@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { THTTPRequest, THTTPResponse, TStreamChunk } from '@/entities/record/types';
+import type { THTTPRequest, THTTPResponse, TStreamChunk } from '@/entities/event';
 import { fmt, stringifyMaybe } from '@/shared/lib';
 import { CopyButton } from '@/shared/ui/copy-button';
 import { KV } from './kv';

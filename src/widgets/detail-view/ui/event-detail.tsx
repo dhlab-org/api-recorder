@@ -1,4 +1,4 @@
-import type { TEventGroup } from '@/entities/record/types';
+import type { TGroupedEvent } from '@/entities/event';
 import { HttpDetail } from './http-detail';
 import { SocketIODetail } from './socketio-detail';
 import { StreamDetail } from './stream-detail';
@@ -22,5 +22,5 @@ const EventDetail = ({ group }: TProps) => {
 export { EventDetail };
 
 type TProps = {
-  group: TEventGroup;
+  group: TGroupedEvent;
 };

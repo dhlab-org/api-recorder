@@ -1,7 +1,7 @@
 import { combineStyles } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui';
+import { buttonText, devtoolsButton, devtoolsButtonContainer, emojiIcon } from '../css/open-devtools-button.css';
 import { useUiModeStore } from '../models/ui-mode-store';
-import { buttonText, devtoolsButton, devtoolsButtonContainer, emojiIcon } from './open-devtools-button.css';
 
 const OpenDevtoolsButton = () => {
   const { setUiMode } = useUiModeStore();

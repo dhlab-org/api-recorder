@@ -1,8 +1,6 @@
 export type TBaseEvent = {
   /** 내부 식별자 (파일 내 유일) */
   id: string;
-  /** 프로토콜 구분 */
-  protocol: 'http' | 'socketio';
   /** 같은 요청/연결 단위를 묶는 키
    * - HTTP: 요청/응답/스트림 이벤트를 하나로 묶음
    * - Socket.IO: 하나의 소켓 연결 단위를 묶음
@@ -12,8 +10,9 @@ export type TBaseEvent = {
   timestamp: number;
 };
 
+// ================= HTTP Events =================
 export type THttpRequestEvent = TBaseEvent & {
-  protocol: 'http';
+  kind: 'http-request';
   /** 'GET' | 'POST' | ... */
   method: string;
   /** 요청 URL */
@@ -24,8 +23,10 @@ export type THttpRequestEvent = TBaseEvent & {
   body?: unknown;
 };
 
-export type THttpResponseEvent = TBaseEvent & {
-  protocol: 'http';
+export type THttpRestResponseEvent = TBaseEvent & {
+  kind: 'http-rest-response';
+  /** 응답 URL (요청 URL과 동일) */
+  url: string;
   /** HTTP status code & text */
   status: number;
   statusText?: string;
@@ -35,14 +36,12 @@ export type THttpResponseEvent = TBaseEvent & {
   body?: unknown;
   /** 요청-응답 왕복 시간(ms) */
   delayMs?: number;
-  /** 스트리밍 응답 여부 플래그 (ReadableStream) */
-  isStream?: boolean;
   /** 에러 상황 표시용 (fetch 예외 등) */
   error?: boolean;
 };
 
-export type THttpStreamEvent = TBaseEvent & {
-  protocol: 'http';
+export type THttpStreamChunkEvent = TBaseEvent & {
+  kind: 'http-stream-chunk';
   /** 스트림이 연결된 엔드포인트 */
   url: string;
   /** data 필드(원본 그대로 직렬화) */
@@ -53,10 +52,17 @@ export type THttpStreamEvent = TBaseEvent & {
   phase?: 'open' | 'message' | 'error' | 'close';
   /** SSE 이벤트 타입 */
   type?: string;
+  /** 응답 정보 (첫 번째 청크에만 포함) */
+  response?: {
+    status: number;
+    statusText?: string;
+    headers?: Record<string, string>;
+  };
 };
 
+// ================= Socket.IO Events =================
 export type TSocketIOEvent = TBaseEvent & {
-  protocol: 'socketio';
+  kind: 'socketio';
   /** 소켓 엔드포인트 (예: ws://..., wss://...) */
   url: string;
   /** 메시지 방향 */
@@ -80,4 +86,4 @@ export type TSocketIOEvent = TBaseEvent & {
   };
 };
 
-export type TRecEvent = THttpRequestEvent | THttpResponseEvent | THttpStreamEvent | TSocketIOEvent;
+export type TSingleEvent = THttpRequestEvent | THttpRestResponseEvent | THttpStreamChunkEvent | TSocketIOEvent;

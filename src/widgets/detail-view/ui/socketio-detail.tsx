@@ -1,6 +1,6 @@
 import { ArrowBigDown, ArrowBigUp } from 'lucide-react';
 import type { ReactNode } from 'react';
-import type { TMessage } from '@/entities/record/types';
+import type { TMessage } from '@/entities/event';
 import { fmt, stringifyMaybe } from '@/shared/lib';
 import {
   badgeRowStyle,

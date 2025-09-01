@@ -1,8 +1,8 @@
-import type { THttpRequestEvent, THttpResponseEvent, TRecEvent } from '@/shared/api';
+import type { THttpRequestEvent, THttpRestResponseEvent, TSingleEvent } from '@/entities/event';
 import type { TState, TXhrMeta } from '../types';
 import { cloneBody } from '../utils/http';
 
-const patchXHR = ({ state, pushEvents }: TArgs) => {
+const patchXHR = ({ state, pushEvent }: TArgs) => {
   const g = globalThis as unknown as {
     __API_RECORDER_PATCHED?: { fetch: boolean; xhr: boolean; socketio: boolean };
     __API_RECORDER_ORIGINAL_XHR_OPEN?: typeof XMLHttpRequest.prototype.open;
@@ -31,7 +31,7 @@ const patchXHR = ({ state, pushEvents }: TArgs) => {
 
   patchXHROpen({ OriginalXHR, originalOpen, state });
   patchXHRSetRequestHeader({ OriginalXHR, originalSetRequestHeader, state });
-  patchXHRSend({ OriginalXHR, originalSend, state, pushEvents });
+  patchXHRSend({ OriginalXHR, originalSend, state, pushEvent });
 };
 
 export { patchXHR };
@@ -64,7 +64,7 @@ const patchXHRSetRequestHeader = ({ OriginalXHR, originalSetRequestHeader, state
   };
 };
 
-const patchXHRSend = ({ OriginalXHR, originalSend, state, pushEvents }: TSendArgs) => {
+const patchXHRSend = ({ OriginalXHR, originalSend, state, pushEvent }: TSendArgs) => {
   OriginalXHR.prototype.send = function (this: XMLHttpRequest, body?: Document | BodyInit | null) {
     const meta = state.xhrMetaMap.get(this) || { headers: {} };
 
@@ -84,15 +84,15 @@ const patchXHRSend = ({ OriginalXHR, originalSend, state, pushEvents }: TSendArg
     const isSocketIOUrl = urlForKey.includes('/socket.io/');
     const withinWindow = typeof last === 'number' && now - last < 1000;
     const suppress = isSocketIOUrl && withinWindow;
-    (meta as any).__apiRecorderSuppress = suppress;
+    meta.__apiRecorderSuppress = suppress;
     if (!suppress) g.__API_RECORDER_DEDUP_HTTP.set(dedupKey, now);
 
     (async () => {
       meta.body = body ? await cloneBody(body as BodyInit) : undefined;
-      if (!(meta as any).__apiRecorderSuppress) {
+      if (!meta.__apiRecorderSuppress) {
         const reqEvent: THttpRequestEvent = {
           id: `${requestId}-req`,
-          protocol: 'http',
+          kind: 'http-request',
           requestId,
           timestamp: start,
           method: meta.method || 'GET',
@@ -100,16 +100,16 @@ const patchXHRSend = ({ OriginalXHR, originalSend, state, pushEvents }: TSendArg
           headers: meta.headers,
           body: meta.body,
         };
-        pushEvents(reqEvent);
+        pushEvent(reqEvent);
       }
     })().catch(() => {});
 
-    setupResponseHandlers({ xhr: this, meta, pushEvents, state });
+    setupResponseHandlers({ xhr: this, meta, pushEvent, state });
     return originalSend.call(this, body as Document | XMLHttpRequestBodyInit | null);
   };
 };
 
-const setupResponseHandlers = ({ xhr, meta, pushEvents, state }: THandlerArgs) => {
+const setupResponseHandlers = ({ xhr, meta, pushEvent, state }: THandlerArgs) => {
   // 핸들러 중복 부착 방지 (StrictMode 등에서 send가 중복 호출되는 경우 보호)
   const g = globalThis as unknown as { __API_RECORDER_XHR_HANDLERS?: WeakSet<XMLHttpRequest> };
   if (!g.__API_RECORDER_XHR_HANDLERS) g.__API_RECORDER_XHR_HANDLERS = new WeakSet<XMLHttpRequest>();
@@ -125,20 +125,20 @@ const setupResponseHandlers = ({ xhr, meta, pushEvents, state }: THandlerArgs) =
     const headers = parseResponseHeaders(xhr);
     const body = parseResponseBody(xhr, headers);
 
-    if (!(meta as any).__apiRecorderSuppress) {
-      const resEvent: THttpResponseEvent = {
+    if (!meta.__apiRecorderSuppress) {
+      const resEvent: THttpRestResponseEvent = {
         id: `${requestId}-res`,
-        protocol: 'http',
+        kind: 'http-rest-response',
         requestId,
         timestamp: end,
+        url: meta.url || '',
         status: xhr.status,
         statusText: xhr.statusText,
         headers,
         body,
         delayMs: end - start,
-        isStream: false,
       };
-      pushEvents(resEvent);
+      pushEvent(resEvent);
     }
 
     cleanup({ xhr, state });
@@ -150,18 +150,19 @@ const setupResponseHandlers = ({ xhr, meta, pushEvents, state }: THandlerArgs) =
     if (!requestId || start === undefined) return;
 
     const end = Date.now();
-    if (!(meta as any).__apiRecorderSuppress) {
-      const errEvent: THttpResponseEvent = {
+    if (!meta.__apiRecorderSuppress) {
+      const errEvent: THttpRestResponseEvent = {
         id: `${requestId}-err`,
-        protocol: 'http',
+        kind: 'http-rest-response',
         requestId,
         timestamp: end,
+        url: meta.url || '',
         status: 0,
         statusText: 'XHR Network Error',
         error: true,
         delayMs: end - start,
       };
-      pushEvents(errEvent);
+      pushEvent(errEvent);
     }
 
     cleanup({ xhr, state });
@@ -220,7 +221,7 @@ const cleanup = ({ xhr, state }: { xhr: XMLHttpRequest; state: TState }) => {
 
 type TArgs = {
   state: TState;
-  pushEvents: (e: TRecEvent) => void;
+  pushEvent: (e: TSingleEvent) => void;
 };
 
 type TOpenArgs = {
@@ -239,12 +240,12 @@ type TSendArgs = {
   OriginalXHR: typeof XMLHttpRequest;
   originalSend: typeof XMLHttpRequest.prototype.send;
   state: TState;
-  pushEvents: (e: TRecEvent) => void;
+  pushEvent: (e: TSingleEvent) => void;
 };
 
 type THandlerArgs = {
   xhr: XMLHttpRequest;
   meta: TXhrMeta;
-  pushEvents: (e: TRecEvent) => void;
+  pushEvent: (e: TSingleEvent) => void;
   state: TState;
 };

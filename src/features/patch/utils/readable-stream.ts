@@ -1,14 +1,14 @@
-import type { THttpStreamEvent, TRecEvent } from '@/shared/api';
-import { createSSEParser } from '@/shared/lib';
+import type { THttpStreamChunkEvent, TSingleEvent } from '@/entities/event';
+import { createSSEParser } from './sse-parser';
 
-export const handleStreamResponse = ({ res, requestId, url, end, pushEvents }: TStreamArgs) => {
+export const handleStreamResponse = ({ res, requestId, url, end, pushEvent }: TStreamArgs) => {
   const originalBody = res.body;
   if (!originalBody) return res;
 
   const [monitorStream, responseStream] = originalBody.tee();
 
   setTimeout(async () => {
-    await monitorStreamData({ monitorStream, requestId, url, end, pushEvents });
+    await monitorStreamData({ monitorStream, requestId, url, end, pushEvent });
   }, 0);
 
   return new Response(responseStream, {
@@ -18,7 +18,7 @@ export const handleStreamResponse = ({ res, requestId, url, end, pushEvents }: T
   });
 };
 
-const monitorStreamData = async ({ monitorStream, requestId, url, end, pushEvents }: TMonitorArgs) => {
+const monitorStreamData = async ({ monitorStream, requestId, url, end, pushEvent }: TMonitorArgs) => {
   let lastTimestamp = end;
 
   const reader = monitorStream.getReader();
@@ -28,9 +28,9 @@ const monitorStreamData = async ({ monitorStream, requestId, url, end, pushEvent
   const parser = createSSEParser({
     onEvent: msg => {
       const now = Date.now();
-      const streamChunkEvent: THttpStreamEvent = {
+      const streamChunkEvent: THttpStreamChunkEvent = {
         id: `${requestId}-stream-${chunkIndex}`,
-        protocol: 'http',
+        kind: 'http-stream-chunk',
         requestId,
         timestamp: now,
         url,
@@ -40,7 +40,7 @@ const monitorStreamData = async ({ monitorStream, requestId, url, end, pushEvent
         type: msg.event,
       };
       lastTimestamp = now;
-      pushEvents(streamChunkEvent);
+      pushEvent(streamChunkEvent);
       chunkIndex++;
     },
   });
@@ -56,9 +56,9 @@ const monitorStreamData = async ({ monitorStream, requestId, url, end, pushEvent
     }
   } catch (streamError) {
     const now = Date.now();
-    const streamErrorEvent: THttpStreamEvent = {
+    const streamErrorEvent: THttpStreamChunkEvent = {
       id: `${requestId}-stream-error`,
-      protocol: 'http',
+      kind: 'http-stream-chunk',
       requestId,
       timestamp: now,
       url,
@@ -66,7 +66,7 @@ const monitorStreamData = async ({ monitorStream, requestId, url, end, pushEvent
       delayMs: now - lastTimestamp,
       phase: 'error',
     };
-    pushEvents(streamErrorEvent);
+    pushEvent(streamErrorEvent);
   } finally {
     try {
       const flushed = decoder.decode();
@@ -84,7 +84,7 @@ type TStreamArgs = {
   requestId: string;
   url: string;
   end: number;
-  pushEvents: (e: TRecEvent) => void;
+  pushEvent: (e: TSingleEvent) => void;
 };
 
 type TMonitorArgs = {
@@ -92,5 +92,5 @@ type TMonitorArgs = {
   requestId: string;
   url: string;
   end: number;
-  pushEvents: (e: TRecEvent) => void;
+  pushEvent: (e: TSingleEvent) => void;
 };

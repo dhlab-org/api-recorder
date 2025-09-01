@@ -1,6 +1,6 @@
-import { ToggleRecordingButton } from '@/features/record';
+import { ToggleRecordingButton } from '@/entities/record';
 import { UiModeControllers } from '@/features/switch-ui-mode';
-import { minimizedContainerStyle } from './minimized-view.css';
+import { minimizedContainerStyle } from '../css/minimized-view.css';
 
 const MinimizedView = () => {
   return (

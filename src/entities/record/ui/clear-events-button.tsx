@@ -1,11 +1,11 @@
 import { Ban } from 'lucide-react';
-import { useRecordingStore } from '@/entities/record';
+import { useEventStore } from '@/entities/event';
 import { combineStyles } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui';
-import { clearButtonStyle } from './clear-events-button.css';
+import { clearButtonStyle } from '../css/clear-events-button.css';
 
 const ClearEventsButton = () => {
-  const { clearEvents } = useRecordingStore();
+  const { clearEvents } = useEventStore();
 
   return (
     <Button variant="ghost" size="icon" onClick={clearEvents} className={combineStyles(clearButtonStyle)}>

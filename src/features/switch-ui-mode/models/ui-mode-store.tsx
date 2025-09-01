@@ -1,5 +1,11 @@
 import { create } from 'zustand';
 
+type TUiModeState = {
+  uiMode: TUiMode;
+
+  setUiMode: (uiMode: TUiMode) => void;
+};
+
 const useUiModeStore = create<TUiModeState>(set => ({
   uiMode: 'closed',
 
@@ -7,11 +13,5 @@ const useUiModeStore = create<TUiModeState>(set => ({
 }));
 
 export { useUiModeStore };
-
-type TUiModeState = {
-  uiMode: TUiMode;
-
-  setUiMode: (uiMode: TUiMode) => void;
-};
 
 export type TUiMode = 'maximized' | 'minimized' | 'closed';
