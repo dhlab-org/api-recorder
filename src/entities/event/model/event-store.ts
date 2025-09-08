@@ -16,6 +16,7 @@ type TEventState = {
   // actions
   pushEvent: (event: TSingleEvent) => void;
   clearEvents: () => void;
+  deleteGroup: (requestId: string) => void;
 };
 
 const useEventStore = create<TEventState>((set, get) => ({
@@ -42,6 +43,21 @@ const useEventStore = create<TEventState>((set, get) => ({
   },
 
   clearEvents: () => set({ events: [], groupedEvents: [] }),
+
+  deleteGroup: requestId => {
+    const state = get();
+
+    // 해당 requestId와 관련된 모든 이벤트 제거
+    const filteredEvents = state.events.filter(event => event.requestId !== requestId);
+
+    // 그룹화된 이벤트에서도 제거
+    const filteredGroupedEvents = state.groupedEvents.filter(group => group.requestId !== requestId);
+
+    set({
+      events: filteredEvents,
+      groupedEvents: filteredGroupedEvents,
+    });
+  },
 }));
 
 export { useEventStore };
