@@ -1,8 +1,11 @@
 import type { TGroupedEvent } from '@/entities/event';
+import { useEventStore } from '@/entities/event';
 import {
   cellStyle,
+  deleteButtonStyle,
   listContainerStyle,
   nameCellStyle,
+  rowContainerStyle,
   rowSelectedStyle,
   rowStyle,
   tableStyle,
@@ -10,6 +13,13 @@ import {
 } from './styles.css';
 
 const EventList = ({ groups, selectedRequestId, onSelectRequest }: TProps) => {
+  const { deleteGroup } = useEventStore();
+
+  const handleDeleteGroup = (e: React.MouseEvent, requestId: string) => {
+    e.stopPropagation(); // 행 클릭 이벤트 방지
+    deleteGroup(requestId);
+  };
+
   return (
     <div className={listContainerStyle}>
       <table className={tableStyle}>
@@ -20,6 +30,7 @@ const EventList = ({ groups, selectedRequestId, onSelectRequest }: TProps) => {
             <th className={cellStyle}>Protocol</th>
             <th className={cellStyle}>URL</th>
             <th className={cellStyle}>Time</th>
+            <th className={cellStyle} style={{ width: '40px' }}></th>
           </tr>
         </thead>
         <tbody>
@@ -27,7 +38,7 @@ const EventList = ({ groups, selectedRequestId, onSelectRequest }: TProps) => {
             <tr
               key={group.requestId}
               onClick={() => onSelectRequest(group.requestId)}
-              className={`${rowStyle} ${group.requestId === selectedRequestId ? rowSelectedStyle : ''}`}
+              className={`${rowStyle} ${rowContainerStyle} ${group.requestId === selectedRequestId ? rowSelectedStyle : ''}`}
             >
               <td className={`${cellStyle} ${nameCellStyle}`}>
                 {group.type === 'http-rest' ? 'HTTP' : group.type === 'http-stream' ? 'Stream' : 'Socket.io'}
@@ -49,6 +60,16 @@ const EventList = ({ groups, selectedRequestId, onSelectRequest }: TProps) => {
                     ? group.request.timestamp
                     : group.connection.timestamp,
                 ).toLocaleTimeString()}
+              </td>
+              <td className={cellStyle} style={{ position: 'relative' }}>
+                <button
+                  type="button"
+                  className={`${deleteButtonStyle} delete-button`}
+                  onClick={e => handleDeleteGroup(e, group.requestId)}
+                  title="Delete group"
+                >
+                  ×
+                </button>
               </td>
             </tr>
           ))}
