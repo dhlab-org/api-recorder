@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 type TRecordingState = {
   isRecording: boolean;
@@ -8,15 +9,23 @@ type TRecordingState = {
   toggleRecording: () => void;
 };
 
-const useRecordingStore = create<TRecordingState>((set, get) => ({
-  isRecording: false,
+const useRecordingStore = create<TRecordingState>()(
+  persist(
+    (set, get) => ({
+      isRecording: false,
 
-  setIsRecording: isRecording => set({ isRecording }),
+      setIsRecording: isRecording => set({ isRecording }),
 
-  toggleRecording: () => {
-    const { isRecording } = get();
-    set({ isRecording: !isRecording });
-  },
-}));
+      toggleRecording: () => {
+        const { isRecording } = get();
+        set({ isRecording: !isRecording });
+      },
+    }),
+    {
+      name: 'api-recorder:recording',
+      skipHydration: false,
+    },
+  ),
+);
 
 export { useRecordingStore };

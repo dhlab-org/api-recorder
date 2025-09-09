@@ -1,10 +1,18 @@
+import { useRecordingStore } from '@/entities/record';
 import { combineStyles } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui';
-import { buttonText, devtoolsButton, devtoolsButtonContainer, emojiIcon } from '../css/open-devtools-button.css';
+import {
+  buttonText,
+  devtoolsButton,
+  devtoolsButtonContainer,
+  emojiIcon,
+  recordingIndicatorStyle,
+} from '../css/open-devtools-button.css';
 import { useUiModeStore } from '../models/ui-mode-store';
 
 const OpenDevtoolsButton = () => {
   const { setUiMode } = useUiModeStore();
+  const { isRecording } = useRecordingStore();
 
   return (
     <div className={devtoolsButtonContainer}>
@@ -14,7 +22,7 @@ const OpenDevtoolsButton = () => {
         variant="secondary"
         className={combineStyles(devtoolsButton)}
       >
-        <span className={emojiIcon}>🎬</span>
+        {isRecording ? <div className={recordingIndicatorStyle} /> : <span className={emojiIcon}>🎬</span>}
         <span className={buttonText}>API Recorder</span>
       </Button>
     </div>

@@ -1,4 +1,4 @@
-import { style } from '@vanilla-extract/css';
+import { keyframes, style } from '@vanilla-extract/css';
 
 export const devtoolsButtonContainer = style({
   position: 'fixed',
@@ -30,4 +30,21 @@ export const emojiIcon = style({
 export const buttonText = style({
   fontSize: '14px',
   fontWeight: '500',
+});
+
+const pulseAnimation = keyframes({
+  '0%, 100%': {
+    opacity: '1',
+  },
+  '50%': {
+    opacity: '.5',
+  },
+});
+
+export const recordingIndicatorStyle = style({
+  height: '8px',
+  width: '8px',
+  borderRadius: '9999px',
+  backgroundColor: '#ef4444',
+  animation: `${pulseAnimation} 2s cubic-bezier(0.4, 0, 0.6, 1) infinite`,
 });
